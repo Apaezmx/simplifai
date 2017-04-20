@@ -20,12 +20,15 @@
   <body>
     <h1>IA!</h1>
     
+    <p id="f1_upload_process">Loading...<br/><img src="loader.gif" /></p><br />
+    <p id="result"></p>
     <p>Upload a CSV to train your model</p>
-    <form action="/api" method="post" enctype="multipart/form-data">
+    <form action="/api" id="uploader" method="post" enctype="multipart/form-data">
       Select a file: <input type="file" name="upload" />
       <input type="submit" value="Start upload" />
       <input type="text" name="endpoint" value="upload_csv" hidden/>
-    </form>
+    </form>               
+
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
@@ -33,3 +36,63 @@
     <script src="js/bootstrap.min.js"></script>
   </body>
 </html>
+<script>
+$('#uploader').submit(function(e) {
+    startUpload();
+    e.preventDefault();
+    var data = new FormData(this);
+    data.endpoint = 'upload_csv';
+    $.ajax({
+        type: 'POST',
+        url: '/api',
+        data: data,
+        contentType: false,
+        processData: false,
+        success: function(response) {
+            stopUpload(JSON.parse(response));
+        }
+    });
+});
+function startUpload(){
+    document.getElementById('f1_upload_process').style.visibility = 'visible';
+    return true;
+}
+var resp = '';
+function stopUpload(response){
+      var result = '';
+      if (response['status'] == 'OK'){
+         document.getElementById('result').innerHTML =
+           '<span class="msg">The file ' + response['handle'] + ' was uploaded successfully!<\/span><br/><br/>';
+      }
+      else {
+         document.getElementById('result').innerHTML = 
+           '<span class="emsg">There was an error during file upload!<\/span><br/><br/>';
+      }
+      document.getElementById('f1_upload_process').style.visibility = 'hidden';
+      return true;   
+}
+</script> 
+ 
+<style>
+#f1_upload_process{
+   z-index:100;
+   position:absolute;
+   visibility:hidden;
+   text-align:center;
+   width:400px;
+   margin:0px;
+   padding:0px;
+   background-color:#fff;
+   border:1px solid #ccc;
+}
+ 
+form{
+   text-align:center;
+   width:390px;
+   margin:0px;
+   padding:5px;
+   background-color:#fff;
+   border:1px solid #ccc;
+ 
+}
+</style>

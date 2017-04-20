@@ -1,7 +1,7 @@
 import json
 import os
 from db import new_model, save_model
-from server import ROOT_PATH
+from config import config
 
 def make_register():
   registry = {}
@@ -13,9 +13,13 @@ def make_register():
 endpoint = make_register()
 
 @endpoint
-def name(args):
-  return json.dumps({'Name' : 'Powerfull Andres', 'Args' : args})
+def train(args, files):
+  pass
 
+@endpoint
+def train_status(args, files):
+  pass
+  
 @endpoint
 def upload_csv(args, files):
   if 'upload' not in files:
@@ -25,9 +29,10 @@ def upload_csv(args, files):
   name, ext = os.path.splitext(upload.filename)
   if ext != '.csv':
       return 'File extension not recognized'
-  save_path = "/tmp/{name}".format(name=name)
-  upload.save(save_path)
-  model = new_model(ROOT_PATH)
+  save_path = "/tmp/{name}".format(name=upload.filename)
+  if not os.path.isfile(save_path):
+    upload.save(save_path)
+  model = new_model(config.ROOT_PATH)
   model.add_train_file(save_path)
   save_model(model)
   

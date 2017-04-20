@@ -1,3 +1,5 @@
+import json
+
 class ModelStatus():
   NULL = 0
   CREATED = 1
@@ -12,10 +14,10 @@ class Model():
     self.status = ModelStatus.CREATED
     
   def get_handle(self):
-    return path.split('/')[-1]
+    return self.model_path.split('/')[-1]
     
-  def add_train_file(filename):
-    train_files.append(filename)
+  def add_train_file(self, filename):
+    self.train_files.append(filename)
 
   def from_json(self, json):
     self.train_files = json['train_files']

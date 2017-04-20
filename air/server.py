@@ -1,10 +1,8 @@
 import argparse
-from api import *
+from api import resolve_endpoint
 from bottle import error, post, request, route, run, static_file, template
-import os 
-
-ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
-STATIC_PATH = os.path.dirname(os.path.realpath(__file__)) + '/static'
+from config import config
+import os
 
 @error(404)
 def error404(error):
@@ -20,11 +18,11 @@ def serve_api():
 
 @route('/')
 def serve_index():
-  return static_file('index.html', root=STATIC_PATH)
+  return static_file('index.html', root=config.STATIC_PATH)
 
 @route('/<filepath:path>')
 def server_static(filepath):
-  return static_file(filepath, root=STATIC_PATH)
+  return static_file(filepath, root=config.STATIC_PATH)
 
 @route('/hello/<name>')
 def index(name):
@@ -33,6 +31,5 @@ def index(name):
 parser = argparse.ArgumentParser(description='Running air server')
 parser.add_argument('--root_path', type=str, help='filepath to server root')
 args = parser.parse_args()
-
 
 run(reloader=True, host='localhost', port=8080)

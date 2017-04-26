@@ -36,12 +36,20 @@ def parse_val(value):
       # (Type, Test)
       ('int', int),
       ('float', lambda value: float(value.replace('$','').replace(',',''))),
-      ('datetime', lambda value: datetime.strptime(value, "%Y/%m/%d"))
+      ('date', lambda value: datetime.strptime(value, "%Y/%m/%d")),
+      ('time', lambda value: datetime.strptime(value, "%H:%M:%S"))
   ]
 
   for typ, test in tests:
     try:
       v = test(value)
+      # Treat date and time as strings, just replace separator with spaces.
+      if typ == 'date':
+        v = value.split('/')
+        typ = 'str'
+      elif typ == 'time':
+        v = value.split(':')
+        typ = 'str'
       return v, typ
     except ValueError:
       continue
@@ -60,9 +68,13 @@ def load_csvs(file_list):
         for row in reader:
           if not headers:
             headers = row
+            output_headers = 0
             for h in headers:
               data[h] = []
               types[h] = None
+              output_headers += 1 if h.startsWith('output_') else 0
+            if not output_headers:
+              return 'No outputs defined in CSV. Please define columns as outputs by preppending \'output\'.'
           else:
             for idx, value in enumerate(row):
               val, typ = parse_val(value)

@@ -11,7 +11,14 @@ def error404(error):
 
 @post('/api')
 def serve_api():
+  print 'Serving '
+  for k, v in request.forms.iteritems():
+    print str(k) + ':' + str(v)
+  for k, v in request.files.iteritems():
+    print str(k) + ':' + str(v)
   endpoint = request.forms.get('endpoint')
+  if not endpoint:
+    return 'Endpoint not found'
   return resolve_endpoint(endpoint, 
           {k: v for k, v in request.forms.iteritems()},
           {k: v for k, v in request.files.iteritems()})

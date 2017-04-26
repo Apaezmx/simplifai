@@ -1,6 +1,6 @@
 import json
 import os
-from db import new_model, save_model
+from db import get_model, new_model, save_model
 from config import config
 
 def make_register():
@@ -14,11 +14,16 @@ endpoint = make_register()
 
 @endpoint
 def train(args, files):
-  pass
+  try:
+    model = get_model(config.ROOT_PATH, args['handle'])
+  except:
+    return json.dumps({'status': 'ERROR', 'why': 'Model probably not found'})
+  model.start_training()
+  return json.dumps({'status': 'OK', 'handle': model.get_handle()})
 
 @endpoint
 def train_status(args, files):
-  pass
+  return json.dumps({'status': 'OK'})
   
 @endpoint
 def upload_csv(args, files):
@@ -26,6 +31,8 @@ def upload_csv(args, files):
       print files
       return 'No file specified'
   upload = files['upload']
+  if not upload:
+    return 'File not valid'
   name, ext = os.path.splitext(upload.filename)
   if ext != '.csv':
       return 'File extension not recognized'
@@ -36,7 +43,7 @@ def upload_csv(args, files):
   model.add_train_file(save_path)
   save_model(model)
   
-  return json.dumps({'status': 'OK', 'handle': model.get_handle()})
+  return json.dumps({'status': 'OK', 'handle': model.get_handle(), 'types': model.types})
 
 # Calls endpoint with a map of arguments
 def resolve_endpoint(endpoint_str, args, files):

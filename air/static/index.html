@@ -28,7 +28,8 @@
       <input type="submit" value="Start upload" />
       <input type="text" name="endpoint" value="upload_csv" hidden/>
     </form>               
-
+    <div id="types"></div>
+    <input type="submit" id='btn_train' value="Start Training" onclick="startTraining();" hidden />
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
@@ -37,6 +38,7 @@
   </body>
 </html>
 <script>
+var model = "";
 $('#uploader').submit(function(e) {
     startUpload();
     e.preventDefault();
@@ -49,20 +51,80 @@ $('#uploader').submit(function(e) {
         contentType: false,
         processData: false,
         success: function(response) {
+            try {
+                JSON.parse(response);
+            } catch (e) {
+                alert(response);
+                document.getElementById('f1_upload_process').style.visibility = 'hidden';
+                return;
+            }
             stopUpload(JSON.parse(response));
+        },
+        error : function(response) {
+            alert(response);
+            document.getElementById('f1_upload_process').style.visibility = 'hidden';
         }
     });
 });
-function startUpload(){
+
+function startTraining() {
+  if (model == "") {
+    return;
+  }
+  $.post('/api',
+        {'endpoint': 'train',
+         'handle': model},
+        function(response) {
+          response = JSON.parse(response);
+          if (response['status'] != 'OK') {
+            alert(response);
+          }
+        }
+  );
+  doPoll(model);
+}
+function doPoll(handle){
+    $.post('/api', 
+           {'endpoint': 'train_status',
+            'handle': handle},
+           function(data) {
+            data = JSON.parse(data);
+            if (data['status'] == 'DONE') {
+              alert('training finished');
+            } else {
+              updateGraphs(data);
+              setTimeout(function(){doPoll(handle)},5000);
+            }
+    });
+}
+
+
+function startUpload() {
     document.getElementById('f1_upload_process').style.visibility = 'visible';
     return true;
 }
-var resp = '';
 function stopUpload(response){
       var result = '';
       if (response['status'] == 'OK'){
          document.getElementById('result').innerHTML =
            '<span class="msg">The file ' + response['handle'] + ' was uploaded successfully!<\/span><br/><br/>';
+         table = document.createElement('table');
+         headers = document.createElement('tr');
+         row = document.createElement('tr');
+         for (var key in response['types']) {
+          cell = document.createElement('td');
+          cell.innerHTML = key;
+          headers.append(cell);
+
+          cell = document.createElement('td');
+          cell.innerHTML = response['types'][key];
+          row.append(cell);
+         }
+         table.append(headers);
+         table.append(row);
+         $('#types').append(table);
+         model = response['handle'];
+         $('#btn_train').show();
       }
       else {
          document.getElementById('result').innerHTML = 

@@ -78,10 +78,13 @@ function startTraining() {
           response = JSON.parse(response);
           if (response['status'] != 'OK') {
             alert(response);
+          } else {
+            doPoll(model);
           }
         }
   );
-  doPoll(model);
+}
+function updateGraphs(data) {
 }
 function doPoll(handle){
     $.post('/api', 
@@ -93,7 +96,7 @@ function doPoll(handle){
               alert('training finished');
             } else {
               updateGraphs(data);
-              setTimeout(function(){doPoll(handle)},5000);
+              setTimeout(function(){doPoll(handle)},50000);
             }
     });
 }

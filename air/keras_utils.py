@@ -5,7 +5,7 @@ from keras.preprocessing.text import text_to_word_sequence
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential
 from keras.models import model_from_json
-from keras.layers.core import Dense, Dropout, Activation, Reshape, Flatten, Merge
+from keras.layers import Dense, Dropout, Activation, Reshape, Flatten, Merge
 from keras.layers.embeddings import Embedding
 from keras.optimizers import RMSprop
 from keras.utils import np_utils

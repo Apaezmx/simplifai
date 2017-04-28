@@ -1,7 +1,6 @@
 import json
 import os
-from db import get_model, new_model, save_model
-from config import config
+from db import get_model, new_model, save_model, delete_model
 
 def make_register():
   registry = {}
@@ -15,20 +14,26 @@ endpoint = make_register()
 @endpoint
 def train(args, files):
   try:
-    model = get_model(config.ROOT_PATH, args['handle'])
+    model = get_model(args['handle'])
   except:
     return json.dumps({'status': 'ERROR', 'why': 'Model probably not found'})
+  model.build_models()
+  save_model(model)
   model.start_training()
   return json.dumps({'status': 'OK', 'handle': model.get_handle()})
 
 @endpoint
 def train_status(args, files):
-  return json.dumps({'status': 'OK'})
+  try:
+    model = get_model(args['handle'])
+  except:
+    return json.dumps({'status': 'ERROR', 'why': 'Model probably not found'})
+  return json.dumps({'status': 'OK', 'val_losses': model.val_losses})
   
 @endpoint
 def upload_csv(args, files):
   if 'upload' not in files:
-      print files
+      print 'Files not specified in upload: ' + files
       return 'No file specified'
   upload = files['upload']
   if not upload:
@@ -39,13 +44,16 @@ def upload_csv(args, files):
   save_path = "/tmp/{name}".format(name=upload.filename)
   if not os.path.isfile(save_path):
     upload.save(save_path)
-  model = new_model(config.ROOT_PATH)
-  model.add_train_file(save_path)
+  model = new_model()
+  res = model.add_train_file(save_path)
+  if res:
+    delete_model(model.get_handle())
+    return json.dumps({'status': 'ERROR', 'handle': model.get_handle(), 'why': res})
   save_model(model)
   
   return json.dumps({'status': 'OK', 'handle': model.get_handle(), 'types': model.types})
 
-# Calls endpoint with a map of arguments
+# Calls endpoint with a map of arguments.
 def resolve_endpoint(endpoint_str, args, files):
   if endpoint_str in endpoint.all:
       return endpoint.all[endpoint_str](args, files)

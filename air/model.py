@@ -1,21 +1,22 @@
 import json
 import numpy as np
 import keras.backend as K
-from keras.callbacks import ModelCheckpoint
 from keras.models import Sequential
 from keras.layers import Embedding, Dense, Activation, Merge, Flatten, Dropout
 from keras.layers.normalization import BatchNormalization
 from keras.optimizers import RMSprop
 from keras.preprocessing.sequence import pad_sequences
 from multiprocessing import Process
+from train import train
 
 import numpy as np
+import os
 import os.path
 
 # Layers for now will have a constant width across layers. It has a constant number of width specified by WIDE_RANGE
 # plus a dynamic number which depends on the number of inputs. That is we will add WIDE_RATIO neurons for each input.
-WIDE_RANGE = 1
-DEEP_RANGE = 1
+WIDE_RANGE = 2
+DEEP_RANGE = 2
 WIDE_RATIO = 5
 
 class ModelStatus():
@@ -128,7 +129,7 @@ class Model():
         total_input_size += embedding_size * len(word_list[0])
         feature_models.append(model)
       
-      numeric_inputs = len(self.data) - len(self.string_features)
+      numeric_inputs = len(self.data) - len(self.string_features) - len(output_headers)
       num_model = Sequential()
       num_model.add(Dense(numeric_inputs, input_shape=(numeric_inputs,)))
       num_model.add(BatchNormalization())
@@ -160,8 +161,8 @@ class Model():
             model.add(Activation('relu'))
             model.add(Dropout(0.4))
 
-        # Assuming we want to output probability.
-        model.add(Activation('sigmoid'))
+        # No Activation in the end for now... Assuming regression always.
+        model.summary()
         model.compile(loss='mse',
               optimizer=RMSprop(),
               metrics=['accuracy'])
@@ -173,21 +174,27 @@ class Model():
   
   # Slices 'data' into lists where each row contains all features. 
   def get_data_sets(self, train_percentage=0.8):
-    assert len(self.data.itervalues().next()) == len(self.string_features[0].itervalues().next()), 'lens are off'
+    print len(self.data.itervalues().next())
+    print len(self.string_features[0].itervalues().next())
+
     X_train = []
     Y_train = []
-
 
     for dict_ in self.string_features:
       X_train.append(np.array(dict_.itervalues().next()))
 
-    for header, feature in self.data.iteritems():
-      if header in {h.iterkeys().next() : h for h in self.string_features}:
-        continue
-      if header.startswith('output_'):
-        Y_train.append(np.array(feature))
-        continue
-      nums.append(feature)
+    nums = []
+    for idx in xrange(len(self.data.itervalues().next())):
+      row = []
+      for header, feature in self.data.iteritems():
+        if header in {h.iterkeys().next() : h for h in self.string_features}:
+          continue
+        if header.startswith('output_'):
+          Y_train.append(feature[idx])
+          continue
+        row.append(feature[idx])
+ 
+      nums.append(row)
       
     X_train.append(np.array(nums))
      
@@ -196,27 +203,8 @@ class Model():
   # TODO: implement distributed training :O.
   # For now kick-off new process which round-robins doing one epoch each time.
   def start_training(self):
-    def target(handle, train_epochs=30):
-      from db import load_keras_models, get_model, save_model
-      air_model = get_model(handle)
-      air_model.status = ModelStatus.TRAINING
-      models = load_keras_models(handle)
-      X_train, Y_train = air_model.get_data_sets()
-      print 'Lens' + str(len(X_train)) + ' ' + str(len(Y_train))
-      
-      stop_crit = 0
-      while stop_crit < train_epochs:
-        print 'Epoch: ' + str(stop_crit)
-        stop_crit += 1
-        for idx, model in enumerate(models):
-          checkpoint = ModelCheckpoint(air_model.model_path + '_' + idx)
-          history = model.fit(X_train, Y_train, batch_size=32, epoch=5, callbacks=[checkpoint], validation_split=0.1)
-          while len(air_model.val_losses) < idx:
-            air_model.val_losses.append([])
-          air_model.val_losses[idx].extend(history)
-          save_model(air_model)
-    p = Process(target=target, args=(self.get_handle(),))
-    p.start()
+    print 'Starting process'
+    train(self.get_handle())
 
   def from_json(self, json_str):
     json_obj = json.loads(json_str)

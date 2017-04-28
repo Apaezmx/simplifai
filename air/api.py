@@ -17,8 +17,9 @@ def train(args, files):
     model = get_model(args['handle'])
   except:
     return json.dumps({'status': 'ERROR', 'why': 'Model probably not found'})
-  model.build_models()
-  save_model(model)
+  if not model.string_features:
+    model.build_models()
+    save_model(model)
   model.start_training()
   return json.dumps({'status': 'OK', 'handle': model.get_handle()})
 

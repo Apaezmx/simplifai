@@ -35,8 +35,9 @@ def server_static(filepath):
 def index(name):
   return template('<b>Hello {{name}}</b>!', name=name)
 
-parser = argparse.ArgumentParser(description='Running air server')
-parser.add_argument('--root_path', type=str, help='filepath to server root')
-args = parser.parse_args()
+def start():
+  parser = argparse.ArgumentParser(description='Running air server')
+  parser.add_argument('--root_path', type=str, help='filepath to server root')
+  args = parser.parse_args()
 
-run(reloader=True, host='localhost', port=8080)
+  run(reloader=True, host='localhost', port=8080, server='bjoern')

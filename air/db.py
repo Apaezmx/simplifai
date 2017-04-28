@@ -78,7 +78,7 @@ def load_keras_models(handle):
   # Clear first all previously persisted models
   for f in os.listdir(model_dir):
     if re.search(handle + "_[0-9]+", f):
-        models.append(load_model(os.path.join(model_dir, f)))
+      models.append(load_model(os.path.join(model_dir, f)))
 
   return models
 
@@ -111,10 +111,18 @@ def load_csvs(file_list):
             for idx, value in enumerate(row):
               val, typ = parse_val(value)
               data[headers[idx]].append(val)
-              if not types[headers[idx]]:
+              # If we find an entry which is string, then move all the column to be string.
+              if not types[headers[idx]] or typ == 'str':
                 types[headers[idx]] = typ
     else:
       print 'WARN: CSV %s not found' % f
+    # Fix '' values, and standardize formats.
+    for header, column in data.iteritems():
+      for idx, value in enumerate(column):
+        if not value:
+          data[header][idx] = 0 if types[header] != 'str' else ''
+        else:
+          data[header][idx] = str(data[header][idx]) if types[header] == 'str' else data[header][idx]
     return data, types
 
 def random_hex():

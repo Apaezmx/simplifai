@@ -59,7 +59,7 @@ def parse_val(value):
     except ValueError:
       continue
   # No match
-  return value, 'str'
+  return value.decode('utf-8', 'ignore'), 'str'
  
 def persist_keras_models(handle, models):
   model_dir = config.ROOT_PATH + MODEL_PATH
@@ -68,17 +68,17 @@ def persist_keras_models(handle, models):
   for f in os.listdir(model_dir):
     if re.search(handle + "_[0-9]+", f):
         os.remove(os.path.join(model_dir, f))
-  for idx, model in enumerate(models):
-    model.save(os.path.join(model_dir, handle + '_' + str(idx)))
+  for model_name, model in models.iteritems():
+    model.save(os.path.join(model_dir, handle + '_' + unicode(model_name)))
 
 def load_keras_models(handle):
   model_dir = config.ROOT_PATH + MODEL_PATH
-  models = []
+  models = {}
   
   # Clear first all previously persisted models
   for f in os.listdir(model_dir):
     if re.search(handle + "_[0-9]+", f):
-      models.append(load_model(os.path.join(model_dir, f)))
+      models[f.replace(handle+'_','')] = load_model(os.path.join(model_dir, f))
 
   return models
 
@@ -89,7 +89,7 @@ def delete_model(handle):
         os.remove(os.path.join(model_dir, f))
   
 def load_csvs(file_list):  
-  print 'File of csvs to load ' + str(file_list)
+  print 'File of csvs to load ' + unicode(file_list)
   data = {}
   types = {}
   for f in file_list:
@@ -122,7 +122,7 @@ def load_csvs(file_list):
         if not value:
           data[header][idx] = 0 if types[header] != 'str' else ''
         else:
-          data[header][idx] = str(data[header][idx]) if types[header] == 'str' else data[header][idx]
+          data[header][idx] = unicode(data[header][idx]) if types[header] == 'str' else data[header][idx]
     return data, types
 
 def random_hex():

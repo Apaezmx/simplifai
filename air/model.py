@@ -15,8 +15,8 @@ import os.path
 
 # Layers for now will have a constant width across layers. It has a constant number of width specified by WIDE_RANGE
 # plus a dynamic number which depends on the number of inputs. That is we will add WIDE_RATIO neurons for each input.
-WIDE_RANGE = 2
-DEEP_RANGE = 2
+WIDE_RANGE = 4
+DEEP_RANGE = 4
 WIDE_RATIO = 5
 
 class ModelStatus():
@@ -47,7 +47,7 @@ class Model():
   embedding_dicts = {}
   
   # Keras models history.
-  val_losses = []
+  val_losses = {}
 
   def __init__(self, path=''):
     self.model_path = path
@@ -85,7 +85,7 @@ class Model():
     return words, counts
 
   def build_models(self):
-    start_depth = 2
+    start_depth = len(self.data)
     start_width = len(self.types)
     output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')]
     if not output_headers:
@@ -133,16 +133,20 @@ class Model():
       num_model = Sequential()
       num_model.add(Dense(numeric_inputs, input_shape=(numeric_inputs,)))
       num_model.add(BatchNormalization())
-      num_model.add(Activation('relu'))
       total_input_size += numeric_inputs
       feature_models.append(num_model)
       
       merged_model = Sequential()
-      merged_model.add(Merge(feature_models, mode='concat', concat_axis=1))
+      if len(feature_models) < 0:
+        raise ValueError('No models built, no inputs?')
+      elif len(feature_models) == 1:
+        merged_model = feature_models[0]
+      else:
+        merged_model.add(Merge(feature_models, mode='concat', concat_axis=1))
       return merged_model, total_input_size
     
     # We will build in total DEEP_RANGE*WIDE_RANGE models.
-    keras_models = []
+    keras_models = {}
     for depth in range(start_depth, start_depth + DEEP_RANGE):
       for width in range(start_width, start_width + WIDE_RANGE):
         model, input_size = init_model(self)
@@ -160,6 +164,9 @@ class Model():
             model.add(Dense(net_width, input_shape=(net_width,)))
             model.add(Activation('relu'))
             model.add(Dropout(0.4))
+        
+        # Add a last 'scaler' for output normalization.
+        model.add(Dense(len(output_headers), input_shape=(len(output_headers),)))
 
         # No Activation in the end for now... Assuming regression always.
         model.summary()
@@ -167,7 +174,7 @@ class Model():
               optimizer=RMSprop(),
               metrics=['accuracy'])
         
-        keras_models.append(model)
+        keras_models[str(width) + 'x' + str(depth)] = model
     
     from db import persist_keras_models
     persist_keras_models(self.get_handle(), keras_models)
@@ -175,7 +182,8 @@ class Model():
   # Slices 'data' into lists where each row contains all features. 
   def get_data_sets(self, train_percentage=0.8):
     print len(self.data.itervalues().next())
-    print len(self.string_features[0].itervalues().next())
+    if len(self.string_features) > 0:
+      print len(self.string_features[0].itervalues().next())
 
     X_train = []
     Y_train = []
@@ -199,7 +207,7 @@ class Model():
     X_train.append(np.array(nums))
      
     return X_train, Y_train
-  
+      
   # TODO: implement distributed training :O.
   # For now kick-off new process which round-robins doing one epoch each time.
   def start_training(self):

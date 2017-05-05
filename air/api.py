@@ -1,6 +1,6 @@
 import json
 import os
-from db import get_model, new_model, save_model, delete_model
+from db import get_model, new_model, save_model, delete_model, load_keras_models
 
 def make_register():
   registry = {}
@@ -29,7 +29,11 @@ def train_status(args, files):
     model = get_model(args['handle'])
   except:
     return json.dumps({'status': 'ERROR', 'why': 'Model probably not found'})
-  return json.dumps({'status': 'OK', 'val_losses': model.val_losses})
+  
+  # Only return the last 200 values.
+  losses = {model_name: {metric_name: vals[-200:] for metric_name, vals in value_dict.iteritems()} 
+      for model_name, value_dict in model.val_losses.iteritems()}
+  return json.dumps({'status': 'OK', 'val_losses': losses})
   
 @endpoint
 def upload_csv(args, files):

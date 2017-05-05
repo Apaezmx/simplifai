@@ -22,17 +22,17 @@ def train(handle, train_epochs=30):
     print 'Epoch: ' + str(epoch)
     epoch += 1
     all_ended = True
-    for idx, model in enumerate(models):
-      checkpoint = ModelCheckpoint(air_model.model_path + '_' + str(idx))
+    for model_name, model in models.iteritems():
+      checkpoint = ModelCheckpoint(air_model.model_path + '_' + model_name)
       history = model.fit(X_train, Y_train, batch_size=32, nb_epoch=5, callbacks=[checkpoint], validation_split=0.1)
-      while len(air_model.val_losses) <= idx:
-        air_model.val_losses.append({})
+      if model_name not in air_model.val_losses:
+        air_model.val_losses[model_name] = {}
       for key, val in history.history.iteritems():
-        if key in air_model.val_losses[idx]:
-          air_model.val_losses[idx][key].extend(val)
+        if key in air_model.val_losses[model_name]:
+          air_model.val_losses[model_name][key].extend(val)
         else:
-          air_model.val_losses[idx][key] = val
+          air_model.val_losses[model_name][key] = val
       if history.history['loss'][0] > 1:
         all_ended = False 
       save_model(air_model)
-    go_crit = not all_ended
+    go_crit = not all_ended and epoch < 1000

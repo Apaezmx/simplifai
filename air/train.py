@@ -6,6 +6,9 @@ def info(title):
     print 'module name: ' +  __name__
     print 'parent process: ' + str(os.getppid())
     print 'process id: ' + str(os.getpid())
+    
+EPOCHS_PER_MODEL = 100
+TOTAL_EPOCHS = 5000
 
 def train(handle, train_epochs=30):
   from db import load_keras_models, get_model, save_model
@@ -24,7 +27,11 @@ def train(handle, train_epochs=30):
     all_ended = True
     for model_name, model in models.iteritems():
       checkpoint = ModelCheckpoint(air_model.model_path + '_' + model_name)
-      history = model.fit(X_train, Y_train, batch_size=32, nb_epoch=5, callbacks=[checkpoint], validation_split=0.1)
+      history = model.fit(X_train, Y_train, 
+                          batch_size=32, 
+                          nb_epoch=EPOCHS_PER_MODEL,
+                          callbacks=[checkpoint], 
+                          validation_split=0.1)
       if model_name not in air_model.val_losses:
         air_model.val_losses[model_name] = {}
       for key, val in history.history.iteritems():
@@ -32,7 +39,10 @@ def train(handle, train_epochs=30):
           air_model.val_losses[model_name][key].extend(val)
         else:
           air_model.val_losses[model_name][key] = val
-      if history.history['loss'][0] > 1:
+      if history.history['val_loss'][0] > 0.01:
         all_ended = False 
       save_model(air_model)
-    go_crit = not all_ended and epoch < 1000
+    go_crit = not all_ended and epoch < TOTAL_EPOCHS / EPOCHS_PER_MODEL
+  
+  air_model.stats = ModelStatus.TRAINED
+  save_model(air_model)

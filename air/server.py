@@ -23,6 +23,10 @@ def serve_api():
           {k: v for k, v in request.forms.iteritems()},
           {k: v for k, v in request.files.iteritems()})
 
+@route('/infer')
+def serve_index():
+  return static_file('infer.html', root=config.STATIC_PATH)
+  
 @route('/')
 def serve_index():
   return static_file('index.html', root=config.STATIC_PATH)

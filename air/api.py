@@ -1,6 +1,9 @@
 import json
+import math
 import os
 from db import get_model, new_model, save_model, delete_model, load_keras_models
+
+LOSS_LENGTH = 0
 
 def make_register():
   registry = {}
@@ -10,6 +13,23 @@ def make_register():
   registrar.all = registry
   return registrar
 endpoint = make_register()
+
+def handleNaN(val):
+  if math.isnan(val):
+    return 0
+  return val
+
+@endpoint
+def infer(args, files):
+  try:
+    model = get_model(args['handle'])
+  except:
+    return json.dumps({'status': 'ERROR', 'why': 'Model probably not found'})
+    
+  if 'values' not in args:
+    return json.dumps({'status': 'ERROR', 'why': 'No values specified'})
+  
+  model.infer(values)
 
 @endpoint
 def train(args, files):
@@ -29,10 +49,11 @@ def train_status(args, files):
     model = get_model(args['handle'])
   except:
     return json.dumps({'status': 'ERROR', 'why': 'Model probably not found'})
-  
-  # Only return the last 200 values.
-  losses = {model_name: {metric_name: vals[-200:] for metric_name, vals in value_dict.iteritems()} 
-      for model_name, value_dict in model.val_losses.iteritems()}
+  losses = {}
+  for model_name, value_dict in model.val_losses.iteritems():
+    for metric_name, vals in value_dict.iteritems():
+      losses[model_name] = {metric_name: [handleNaN(x) for x in vals[LOSS_LENGTH:]]}
+      
   return json.dumps({'status': 'OK', 'val_losses': losses})
   
 @endpoint

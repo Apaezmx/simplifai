@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>IA</title>
+
+    <!-- Bootstrap and custom CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/custom.css" rel="stylesheet">
+    
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <h1>IA!</h1>
+    
+    <p>Infer which model?</p>
+    <input type="text" id='text_model' value="" />
+    <p>Which values?</p>
+    <input type="text" id='text_vals' value=""  />
+    <input type="submit" id='btn_infer' value="" onclick="infer();" />"
+    
+    
+    
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+  </body>
+</html>
+<script>
+function infer() {
+  $.post('/api',
+        {'endpoint': 'infer',
+         'handle': $('#text_model').val(),
+         'values': $('#text_vals').val()},
+        function(response) {
+          if (response['status'] != 'OK') {
+            alert(response);
+          }
+        }
+  );
+}
+</script> 
+

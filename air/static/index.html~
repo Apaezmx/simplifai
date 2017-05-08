@@ -7,8 +7,9 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <title>IA</title>
 
-    <!-- Bootstrap -->
+    <!-- Bootstrap and custom CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/custom.css" rel="stylesheet">
     
     <!-- D3.js -->
     <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -82,7 +83,6 @@ function startTraining() {
         {'endpoint': 'train',
          'handle': model},
         function(response) {
-          response = JSON.parse(response);
           if (response['status'] != 'OK') {
             alert(response);
           }
@@ -97,11 +97,16 @@ function createGraphs(response) {
     var loss = response["val_losses"][key]["loss"];
     var data = [];
     var j = 0;
-    if (valLoss.length > 200) {
-      var j = valLoss.length - 200;
-    }
     for (; j < valLoss.length; j++) {
-      data.push({'loss': loss[j], 'valLoss':valLoss[j], 'x':j})
+      l = 0
+      v = 0
+      if (loss != undefined) {
+        l = loss[j]
+      }
+      if (valLoss != undefined) {
+        v = valLoss[j]
+      }
+      data.push({'loss': l, 'valLoss': v, 'x':j})
     }
     
     margin = {top: 40, right: 20, bottom: 40, left: 90},
@@ -181,7 +186,7 @@ function doPoll(handle){
               alert('training finished');
             } else {
               updateGraphs(data);
-              setTimeout(function(){doPoll(handle)},5000);
+              setTimeout(function(){doPoll(handle)},10000);
             }
     });
 }
@@ -222,27 +227,4 @@ function stopUpload(response){
       return true;   
 }
 </script> 
- 
-<style>
-#f1_upload_process{
-   z-index:100;
-   position:absolute;
-   visibility:hidden;
-   text-align:center;
-   width:400px;
-   margin:0px;
-   padding:0px;
-   background-color:#fff;
-   border:1px solid #ccc;
-}
- 
-form{
-   text-align:center;
-   width:390px;
-   margin:0px;
-   padding:5px;
-   background-color:#fff;
-   border:1px solid #ccc;
- 
-}
-</style>
+

@@ -123,7 +123,15 @@ def load_csvs(file_list):
           data[header][idx] = 0 if types[header] != 'str' else ''
         else:
           data[header][idx] = unicode(data[header][idx]) if types[header] == 'str' else data[header][idx]
-    return data, types
+    # Normalize numeric inputs to -1 to 1.
+    norms = {}
+    for header, column in data.iteritems():
+      if types[header] != 'str':
+        floor = min(column)
+        ceil = max(column)
+        norms[header] = (floor, ceil)
+        data[header] = [2*(x-floor)/(ceil - floor) - 1 for x in column]
+    return data, types, norms
 
 def random_hex():
   ran = random.randrange(10**80)

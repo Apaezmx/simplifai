@@ -4,7 +4,7 @@ import keras.backend as K
 from keras.models import Sequential
 from keras.layers import Embedding, Dense, Activation, Merge, Flatten, Dropout
 from keras.layers.normalization import BatchNormalization
-from keras.optimizers import RMSprop
+from keras.optimizers import RMSprop, SGD, Adagrad
 from keras.preprocessing.sequence import pad_sequences
 from multiprocessing import Process
 from train import train
@@ -15,14 +15,16 @@ import os.path
 
 # Layers for now will have a constant width across layers. It has a constant number of width specified by WIDE_RANGE
 # plus a dynamic number which depends on the number of inputs. That is we will add WIDE_RATIO neurons for each input.
-WIDE_RANGE = 4
-DEEP_RANGE = 4
+WIDE_RANGE = 1
+DEEP_RANGE = 1
 WIDE_RATIO = 5
+MIN_DEPTH = 2
 
 class ModelStatus():
   NULL = 0
   CREATED = 1
   TRAINING = 2
+  TRAINED = 3
     
 class Model():
   # Complete path where this Model is saved. It mainly contains metadata. Keras models are store elsewhere.
@@ -39,6 +41,9 @@ class Model():
   
   # FeatureName keyed dict which contains lists with all features.
   data = {}
+  
+  # Normalization max and min values for numeric inputs.
+  norms = {}
   
   # Same as data but with integerized strings for string features.
   string_features = []
@@ -59,12 +64,13 @@ class Model():
   def add_train_file(self, filename):
     from db import load_csvs
     self.train_files.append(filename)
-    data, types = load_csvs(self.train_files)
+    data, types, norms = load_csvs(self.train_files)
     if not types:
       return data
     if not self.data:
       self.data = data
       self.types = types
+      self.norms = norms
     else:
       for idx, _ in enumerate(types):
         if types[idx] != self.types[idx]:
@@ -85,7 +91,7 @@ class Model():
     return words, counts
 
   def build_models(self):
-    start_depth = len(self.data)
+    start_depth = len(self.data) + MIN_DEPTH
     start_width = len(self.types)
     output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')]
     if not output_headers:
@@ -132,7 +138,8 @@ class Model():
       numeric_inputs = len(self.data) - len(self.string_features) - len(output_headers)
       num_model = Sequential()
       num_model.add(Dense(numeric_inputs, input_shape=(numeric_inputs,)))
-      num_model.add(BatchNormalization())
+      num_model.add(Activation('relu'))
+      num_model.add(Dropout(0.2))
       total_input_size += numeric_inputs
       feature_models.append(num_model)
       
@@ -147,55 +154,59 @@ class Model():
     
     # We will build in total DEEP_RANGE*WIDE_RANGE models.
     keras_models = {}
-    for depth in range(start_depth, start_depth + DEEP_RANGE):
-      for width in range(start_width, start_width + WIDE_RANGE):
-        model, input_size = init_model(self)
-        net_width = width + input_size * WIDE_RATIO
-        
-        # We will add 'depth' layers with 'net_width' neurons.
-        for i in range(depth):
-          if i == 0:
-            model.add(Dense(net_width, input_shape=(input_size,)))
-            model.add(Activation('relu'))
-            model.add(Dropout(0.4))
-          elif i == depth - 1:
-            model.add(Dense(len(output_headers), input_shape=(net_width,)))
-          else:
-            model.add(Dense(net_width, input_shape=(net_width,)))
-            model.add(Activation('relu'))
-            model.add(Dropout(0.4))
-        
-        # Add a last 'scaler' for output normalization.
-        model.add(Dense(len(output_headers), input_shape=(len(output_headers),)))
+    optimizers = [(RMSprop(), 'RMSprop'), (SGD(clipnorm=1.), 'SGD'), (Adagrad(), 'Adagrad')]
+    for optimizer in optimizers:
+      for depth in range(start_depth, start_depth + DEEP_RANGE):
+        for width in range(start_width, start_width + WIDE_RANGE):
+          model, input_size = init_model(self)
+          net_width = width + input_size * WIDE_RATIO
+          
+          # We will add 'depth' layers with 'net_width' neurons.
+          for i in range(depth):
+            if i == 0:
+              model.add(Dense(net_width, input_shape=(input_size,)))
+              model.add(Activation('relu'))
+              model.add(Dropout(0.2))
+            elif i == depth - 1:
+              model.add(Dense(len(output_headers), input_shape=(net_width,)))
+              model.add(Activation('relu'))
+              model.add(Dropout(0.2))
+            else:
+              model.add(Dense(net_width, input_shape=(net_width,)))
+              model.add(Activation('relu'))
+              model.add(Dropout(0.2))
+          
+          # Add a last 'scaler' for output normalization.
+          model.add(Dense(len(output_headers), input_shape=(len(output_headers),)))
 
-        # No Activation in the end for now... Assuming regression always.
-        model.summary()
-        model.compile(loss='mse',
-              optimizer=RMSprop(),
-              metrics=['accuracy'])
-        
-        keras_models[str(width) + 'x' + str(depth)] = model
+          # No Activation in the end for now... Assuming regression always.
+          model.summary()
+          model.compile(loss='mse',
+                optimizer=optimizer[0],
+                metrics=['accuracy'])
+          
+          keras_models[str(net_width) + 'x' + str(depth) + '-' + optimizer[1]] = model
     
     from db import persist_keras_models
     persist_keras_models(self.get_handle(), keras_models)
   
   # Slices 'data' into lists where each row contains all features. 
-  def get_data_sets(self, train_percentage=0.8):
-    print len(self.data.itervalues().next())
-    if len(self.string_features) > 0:
-      print len(self.string_features[0].itervalues().next())
+  def get_data_sets(self, data=self.data, string_features=self.string_features):
+    print len(data.itervalues().next())
+    if len(string_features) > 0:
+      print len(string_features[0].itervalues().next())
 
     X_train = []
     Y_train = []
 
-    for dict_ in self.string_features:
+    for dict_ in string_features:
       X_train.append(np.array(dict_.itervalues().next()))
 
     nums = []
-    for idx in xrange(len(self.data.itervalues().next())):
+    for idx in xrange(len(data.itervalues().next())):
       row = []
-      for header, feature in self.data.iteritems():
-        if header in {h.iterkeys().next() : h for h in self.string_features}:
+      for header, feature in data.iteritems():
+        if header in {h.iterkeys().next() : h for h in string_features}:
           continue
         if header.startswith('output_'):
           Y_train.append(feature[idx])
@@ -213,6 +224,42 @@ class Model():
   def start_training(self):
     print 'Starting process'
     train(self.get_handle())
+    
+  def normalize_values(self, values):
+    for header, column in values.iteritems():
+      if types[header] != 'str':
+        values[header] = [2*(x-norms[header][0])/(norms[header][1] - norms[header][0]) - 1 for x in column]
+  
+  def intergerize_string(self, data):
+    # Process string features.
+    string_features = []
+    for dict_ in self.string_features:
+      if self.types[ != 'str':
+        continue
+      # Every string feature is treated as a list of words.
+      word_list = [x.split() for x in data[header]]
+      lengths = [len(words) for words in word_list]
+      input_size = len(self.string_features[header][0])
+      for idx, words in enumerate(word_list):
+        # Strings to integers. Pad sequences with zeros so that all of them have the same size.
+        word_list[idx] = pad_sequences([[dict_[word] for word in words]], 
+                                       maxlen=input_size, padding='post', 
+                                       truncating='post')[0].tolist()
+      self.string_features.append({header: word_list})
+        
+    
+  def infer(self, values):
+    if self.status != ModelStatus.TRAINING or self.status != ModelStatus.TRAINED:
+      print 'Model not ready for inference...'
+      return 'Model not ready for inference...'
+    from db import load_keras_models, get_model, save_model
+    air_model = get_model(self.handle)
+    models = load_keras_models(self.handle)
+    
+    normalize_values(values)
+    string_data = intergerize_string(data)
+    X_infer, _ = get_data_sets(
+    
 
   def from_json(self, json_str):
     json_obj = json.loads(json_str)

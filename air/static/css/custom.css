@@ -1,22 +1,46 @@
 
-#f1_upload_process{
-   z-index:100;
-   position:absolute;
-   visibility:hidden;
-   text-align:center;
-   width:400px;
-   margin:0px;
-   padding:0px;
-   background-color:#fff;
-   border:1px solid #ccc;
+body {
+    font-family: 'Open Sans', 'Helvetica neue', sans-serif;
+    margin: 0;
+    padding: 0;
 }
  
-form{
-   text-align:center;
+.jumbotron form{
+   text-align:right;
    width:390px;
-   margin:0px;
+   margin:0 auto;
    padding:5px;
    background-color:#fff;
    border:1px solid #ccc;
- 
+}
+
+
+.jumbotron {
+    text-align: center;
+    background-image: url(../images/uk-population-density-map.png);
+}
+
+#f1_upload_process{
+   z-index:100;
+   visibility:hidden;
+   text-align:center;
+   width:400px;
+   margin:0 auto;
+   padding:0 auto;
+   background-color:#fff;
+   border:1px solid #ccc;
+}
+
+#result {
+    text-align:center;
+    margin:0 auto;
+    padding:0 auto;
+}
+
+.navbar-default {
+    margin:0;
+    background-color: #16212f;
+}
+.navbar-default .navbar-header a {
+    color: whitesmoke;
 }

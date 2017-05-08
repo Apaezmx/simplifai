@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>IA</title>
+
+    <!-- Bootstrap and custom.css-->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/normalize.css" rel="stylesheet">
+    <link href="css/custom.css" rel="stylesheet">
+    
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+      
+      <nav class="navbar navbar-default">
+          <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="#">Brand</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav">
+                <li class="active"><a href="#">Link <span class="sr-only">(current)</span></a></li>
+                <li><a href="#">Link</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+                  <ul class="dropdown-menu">
+                    <li><a href="#">Action</a></li>
+                    <li><a href="#">Another action</a></li>
+                    <li><a href="#">Something else here</a></li>
+                    <li role="separator" class="divider"></li>
+                    <li><a href="#">Separated link</a></li>
+                    <li role="separator" class="divider"></li>
+                    <li><a href="#">One more separated link</a></li>
+                  </ul>
+                </li>
+              </ul>
+              <form class="navbar-form navbar-left">
+                <div class="form-group">
+                  <input type="text" class="form-control" placeholder="Search">
+                </div>
+                <button type="submit" class="btn btn-default">Submit</button>
+              </form>
+              <ul class="nav navbar-nav navbar-right">
+                <li><a href="#">Link</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+                  <ul class="dropdown-menu">
+                    <li><a href="#">Action</a></li>
+                    <li><a href="#">Another action</a></li>
+                    <li><a href="#">Something else here</a></li>
+                    <li role="separator" class="divider"></li>
+                    <li><a href="#">Separated link</a></li>
+                  </ul>
+                </li>
+              </ul>
+            </div><!-- /.navbar-collapse -->
+          </div><!-- /.container-fluid -->
+        </nav>
+      
+    <div class="jumbotron">
+        <div class="container">
+            <h1>Your very own neural network!</h1>
+            <p>Upload a CSV to train your model</p>
+            <br>
+            <form action="/api" id="uploader" method="post" enctype="multipart/form-data">
+                <div class="input-group">
+                    <input type="file" class="form-control" name="upload"/>
+                    <input type="submit" class="form-control" value="Start upload"/>
+                </div>
+                <input type="text" name="endpoint" value="upload_csv" hidden/>
+            </form>
+            <p id="f1_upload_process">Loading...<br/><img src="loader.gif" /></p><br/>
+            <p id="result"></p>
+        </div>
+    </div>
+                  
+    <div id="types"></div>
+    <input type="submit" id='btn_train' value="Start Training" onclick="startTraining();" hidden />
+    <div id="graphs">
+    </div>
+    
+    
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+  </body>
+</html>
+
+<script>
+var model = "";
+$('#uploader').submit(function(e) {
+    startUpload();
+    e.preventDefault();
+    var data = new FormData(this);
+    data.endpoint = 'upload_csv';
+    $.ajax({
+        type: 'POST',
+        url: '/api',
+        data: data,
+        contentType: false,
+        processData: false,
+        success: function(response) {
+            try {
+                JSON.parse(response);
+            } catch (e) {
+                alert(response);
+                document.getElementById('f1_upload_process').style.visibility = 'hidden';
+                return;
+            }
+            stopUpload(JSON.parse(response));
+        },
+        error : function(response) {
+            alert(response);
+            document.getElementById('f1_upload_process').style.visibility = 'hidden';
+        }
+    });
+});
+
+function startTraining() {
+  if (model == "") {
+    return;
+  }
+  $.post('/api',
+        {'endpoint': 'train',
+         'handle': model},
+        function(response) {
+          response = JSON.parse(response);
+          if (response['status'] != 'OK') {
+            alert(response);
+          }
+        }
+  );
+  doPoll(model);
+}
+
+function createGraphs(response) {
+  for (var key in response['val_losses']) {
+    var valLoss = response["val_losses"][key]["val_loss"];
+    var loss = response["val_losses"][key]["loss"];
+    var data = [];
+    var j = 0;
+    if (valLoss.length > 200) {
+      var j = valLoss.length - 200;
+    }
+    for (; j < valLoss.length; j++) {
+      data.push({'loss': loss[j], 'valLoss':valLoss[j], 'x':j})
+    }
+    
+    margin = {top: 40, right: 20, bottom: 40, left: 90},
+    width = 500 - margin.left - margin.right,
+    height = 300 - margin.top - margin.bottom;
+    
+    var svg = d3.select("#graphs").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .attr("id", "svg" + key)
+      .append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+    var x = d3.scaleLinear()
+        .rangeRound([0, width]);
+
+    var y = d3.scaleLinear()
+        .rangeRound([height, 0]);
+
+    var lossLine = d3.line()
+        .x(function(d) {return x(d.x);})
+        .y(function(d) {return y(d.loss);});
+    var valLossLine = d3.line()
+        .x(function(d) {return x(d.x);})
+        .y(function(d) {return y(d.valLoss);});
+
+    x.domain(d3.extent(data, function(d) { return d.x; }));
+    y.domain([d3.min(data, function(d) {
+	    return Math.min(d.loss, d.valLoss); }), 
+	    d3.max(data, function(d) { return Math.max(d.loss, d.valLoss); })]);
+
+    svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x));
+
+    svg.append("g")
+        .call(d3.axisLeft(y))
+
+    svg.append("path")
+        .data([data])
+        .attr("fill", "none")
+        .attr("stroke", "red")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("stroke-width", 1.5)
+        .attr("d", lossLine);
+        
+    svg.append("path")
+        .data([data])
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("stroke-width", 1.5)
+        .attr("d", valLossLine);
+        
+    svg.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "middle")  
+        .style("font-size", "16px") 
+        .text("Model " + key);
+  }
+  
+}
+function updateGraphs(response) {
+   $('#graphs').empty();
+   createGraphs(response);
+}
+function doPoll(handle){
+    $.post('/api', 
+           {'endpoint': 'train_status',
+            'handle': handle},
+           function(data) {
+            data = JSON.parse(data);
+            if (data['status'] == 'DONE') {
+              alert('training finished');
+            } else {
+              updateGraphs(data);
+              setTimeout(function(){doPoll(handle)},10000);
+            }
+    });
+}
+
+
+function startUpload() {
+    document.getElementById('f1_upload_process').style.visibility = 'visible';
+    return true;
+}
+function stopUpload(response){
+      var result = '';
+      if (response['status'] == 'OK'){
+         document.getElementById('result').innerHTML =
+           '<span class="msg">The file ' + response['handle'] + ' was uploaded successfully!<\/span><br/><br/>';
+         table = document.createElement('table');
+         headers = document.createElement('tr');
+         row = document.createElement('tr');
+         for (var key in response['types']) {
+          cell = document.createElement('td');
+          cell.innerHTML = key;
+          headers.append(cell);
+
+          cell = document.createElement('td');
+          cell.innerHTML = response['types'][key];
+          row.append(cell);
+         }
+         table.append(headers);
+         table.append(row);
+         $('#types').append(table);
+         model = response['handle'];
+         $('#btn_train').show();
+      }
+      else {
+         document.getElementById('result').innerHTML = 
+           '<span class="emsg">There was an error during file upload!<\/span><br/><br/>';
+      }
+      document.getElementById('f1_upload_process').style.visibility = 'hidden';
+      return true;   
+}
+</script> 

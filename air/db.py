@@ -6,7 +6,7 @@ import os
 from config import config
 from datetime import datetime
 from keras.models import load_model
-from model import Model
+from model import Model, ModelStatus
 
 MODEL_PATH = '/models'
 
@@ -62,6 +62,7 @@ def parse_val(value):
   return value.decode('utf-8', 'ignore'), 'str'
  
 def persist_keras_models(handle, models):
+  print str(models)
   model_dir = config.ROOT_PATH + MODEL_PATH
   
   # Clear first all previously persisted models
@@ -69,6 +70,7 @@ def persist_keras_models(handle, models):
     if re.search(handle + "_[0-9]+", f):
         os.remove(os.path.join(model_dir, f))
   for model_name, model in models.iteritems():
+    print 'Persisting ' + handle + '_' + unicode(model_name)
     model.save(os.path.join(model_dir, handle + '_' + unicode(model_name)))
 
 def load_keras_models(handle):
@@ -77,7 +79,7 @@ def load_keras_models(handle):
   
   # Clear first all previously persisted models
   for f in os.listdir(model_dir):
-    if re.search(handle + "_[0-9]+", f):
+    if re.search(handle + "_.*", f):
       models[f.replace(handle+'_','')] = load_model(os.path.join(model_dir, f))
 
   return models
@@ -125,12 +127,13 @@ def load_csvs(file_list):
           data[header][idx] = unicode(data[header][idx]) if types[header] == 'str' else data[header][idx]
     # Normalize numeric inputs to -1 to 1.
     norms = {}
+    
     for header, column in data.iteritems():
       if types[header] != 'str':
-        floor = min(column)
-        ceil = max(column)
+        floor = float(min(column))
+        ceil = float(max(column))
         norms[header] = (floor, ceil)
-        data[header] = [2*(x-floor)/(ceil - floor) - 1 for x in column]
+        data[header] = [(x-floor)/(ceil - floor) for x in column]
     return data, types, norms
 
 def random_hex():

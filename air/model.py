@@ -4,7 +4,7 @@ import keras.backend as K
 from keras.models import Sequential
 from keras.layers import Embedding, Dense, Activation, Merge, Flatten, Dropout
 from keras.layers.normalization import BatchNormalization
-from keras.optimizers import RMSprop, SGD, Adagrad
+from keras.optimizers import *
 from keras.preprocessing.sequence import pad_sequences
 from multiprocessing import Process
 from train import train
@@ -15,10 +15,10 @@ import os.path
 
 # Layers for now will have a constant width across layers. It has a constant number of width specified by WIDE_RANGE
 # plus a dynamic number which depends on the number of inputs. That is we will add WIDE_RATIO neurons for each input.
-WIDE_RANGE = 1
-DEEP_RANGE = 1
+WIDE_RANGE = 2
+DEEP_RANGE = 2
 WIDE_RATIO = 5
-MIN_DEPTH = 2
+MIN_DEPTH = 1
 
 class ModelStatus():
   NULL = 0
@@ -45,7 +45,7 @@ class Model():
   # Normalization max and min values for numeric inputs.
   norms = {}
   
-  # Same as data but with integerized strings for string features.
+  # List of tuples containing (string_header, string_column).
   string_features = []
   
   # FeatureName keyed dict for string feature containing the dictionary word->count.
@@ -116,16 +116,16 @@ class Model():
         word_list[idx] = pad_sequences([[dict_[word] for word in words]], 
                                        maxlen=input_size, padding='post', 
                                        truncating='post')[0].tolist()
-      self.string_features.append({header: word_list})
+      self.string_features.append((header, word_list))
     
     # Build models.
     # Merge all inputs into one model.
     def init_model(self):
       feature_models = []
       total_input_size = 0
-      for dict_ in self.string_features:
-        header = dict_.iterkeys().next()
-        word_list = dict_.itervalues().next()
+      for tup in self.string_features:
+        header = tup[0]
+        word_list = tup[1]
         sequence_length = len(word_list[0])
         embedding_size = int(np.round(np.log10(len(self.embedding_dicts[header]))))
         embedding_size = embedding_size if embedding_size > 0 else 1
@@ -138,8 +138,6 @@ class Model():
       numeric_inputs = len(self.data) - len(self.string_features) - len(output_headers)
       num_model = Sequential()
       num_model.add(Dense(numeric_inputs, input_shape=(numeric_inputs,)))
-      num_model.add(Activation('relu'))
-      num_model.add(Dropout(0.2))
       total_input_size += numeric_inputs
       feature_models.append(num_model)
       
@@ -154,7 +152,7 @@ class Model():
     
     # We will build in total DEEP_RANGE*WIDE_RANGE models.
     keras_models = {}
-    optimizers = [(RMSprop(), 'RMSprop'), (SGD(clipnorm=1.), 'SGD'), (Adagrad(), 'Adagrad')]
+    optimizers = [(RMSprop(), 'RMSprop'), (SGD(), 'SGD'), (Adagrad(), 'Adagrad')]
     for optimizer in optimizers:
       for depth in range(start_depth, start_depth + DEEP_RANGE):
         for width in range(start_width, start_width + WIDE_RANGE):
@@ -186,27 +184,31 @@ class Model():
                 metrics=['accuracy'])
           
           keras_models[str(net_width) + 'x' + str(depth) + '-' + optimizer[1]] = model
+    """model, input_size = init_model(self)  
+    model.summary()
+    model.compile(loss='mae', optimizer=RMSprop(), metrics=['accuracy'])
+       
+    keras_models["The_model"] = model"""
     
     from db import persist_keras_models
     persist_keras_models(self.get_handle(), keras_models)
   
   # Slices 'data' into lists where each row contains all features. 
-  def get_data_sets(self, data=self.data, string_features=self.string_features):
-    print len(data.itervalues().next())
-    if len(string_features) > 0:
-      print len(string_features[0].itervalues().next())
+  def get_data_sets(self, data=None, string_features=None):
+    data = data if data else self.data
+    string_features = string_features if string_features else self.string_features
 
     X_train = []
     Y_train = []
 
-    for dict_ in string_features:
-      X_train.append(np.array(dict_.itervalues().next()))
+    for tup in string_features:
+      X_train.append(np.array(tup[1]))
 
     nums = []
     for idx in xrange(len(data.itervalues().next())):
       row = []
       for header, feature in data.iteritems():
-        if header in {h.iterkeys().next() : h for h in string_features}:
+        if header in {tup[0] : None for tup in string_features}:
           continue
         if header.startswith('output_'):
           Y_train.append(feature[idx])
@@ -225,40 +227,57 @@ class Model():
     print 'Starting process'
     train(self.get_handle())
     
+  def normalize_float(self, val, header, reverse=False):
+    if reverse:
+      return val * (self.norms[header][1] - self.norms[header][0]) + self.norms[header][0]
+    return (val-self.norms[header][0])/(self.norms[header][1] - self.norms[header][0])
+
   def normalize_values(self, values):
     for header, column in values.iteritems():
-      if types[header] != 'str':
-        values[header] = [2*(x-norms[header][0])/(norms[header][1] - norms[header][0]) - 1 for x in column]
+      if self.types[header] != 'str':
+        values[header] = [self.normalize_float(float(x), header) for x in column]
   
   def intergerize_string(self, data):
     # Process string features.
     string_features = []
-    for dict_ in self.string_features:
-      if self.types[ != 'str':
+    for header, column in data.iteritems():
+      if self.types[header] != 'str':
         continue
       # Every string feature is treated as a list of words.
       word_list = [x.split() for x in data[header]]
       lengths = [len(words) for words in word_list]
-      input_size = len(self.string_features[header][0])
+      input_size = None
+      for tup in self.string_features:
+        if header == tup[0]:
+          input_size = len(tup[1])
+          break
+      dict_ = self.embedding_dicts[header]
       for idx, words in enumerate(word_list):
         # Strings to integers. Pad sequences with zeros so that all of them have the same size.
-        word_list[idx] = pad_sequences([[dict_[word] for word in words]], 
+        word_list[idx] = pad_sequences([[dict_.get(word, 0) for word in words]], 
                                        maxlen=input_size, padding='post', 
                                        truncating='post')[0].tolist()
-      self.string_features.append({header: word_list})
+      string_features.append((header, word_list))
+    
+    return string_features
         
-    
+  # Values needs to be in the same format as self.data. That is a dictionary of header to value column.
   def infer(self, values):
-    if self.status != ModelStatus.TRAINING or self.status != ModelStatus.TRAINED:
-      print 'Model not ready for inference...'
-      return 'Model not ready for inference...'
-    from db import load_keras_models, get_model, save_model
-    air_model = get_model(self.handle)
-    models = load_keras_models(self.handle)
+    from db import load_keras_models
+    models = load_keras_models(self.get_handle())
     
-    normalize_values(values)
-    string_data = intergerize_string(data)
-    X_infer, _ = get_data_sets(
+    output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')]
+    
+    self.normalize_values(values)
+    string_data = self.intergerize_string(values)
+    X_infer, _ = self.get_data_sets(data=values, string_features=string_data)
+    outputs = {}
+    for model_name, model in models.iteritems():
+      out = model.predict(X_infer).tolist()
+      print str(X_infer) + ' ' + str(out) + ' ' + str(self.norms)
+      for idx, value in enumerate(out[0]):
+        outputs[model_name] = [self.normalize_float(value, output_headers[0], reverse=True)]
+    return outputs
     
 
   def from_json(self, json_str):

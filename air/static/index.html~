@@ -83,6 +83,7 @@ function startTraining() {
         {'endpoint': 'train',
          'handle': model},
         function(response) {
+          response = JSON.parse(response);
           if (response['status'] != 'OK') {
             alert(response);
           }
@@ -182,10 +183,8 @@ function doPoll(handle){
             'handle': handle},
            function(data) {
             data = JSON.parse(data);
+            updateGraphs(data);
             if (data['status'] == 'DONE') {
-              alert('training finished');
-            } else {
-              updateGraphs(data);
               setTimeout(function(){doPoll(handle)},10000);
             }
     });
@@ -215,6 +214,7 @@ function stopUpload(response){
          }
          table.append(headers);
          table.append(row);
+         $('#types').empty()
          $('#types').append(table);
          model = response['handle'];
          $('#btn_train').show();

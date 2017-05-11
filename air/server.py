@@ -19,9 +19,10 @@ def serve_api():
   endpoint = request.forms.get('endpoint')
   if not endpoint:
     return 'Endpoint not found'
-  return resolve_endpoint(endpoint, 
+  response = resolve_endpoint(endpoint, 
           {k: v for k, v in request.forms.iteritems()},
           {k: v for k, v in request.files.iteritems()})
+  return response
 
 @route('/infer')
 def serve_index():

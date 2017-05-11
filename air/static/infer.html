@@ -26,10 +26,10 @@
     
     <p>Infer which model?</p>
     <input type="text" id='text_model' value="" />
-    <p>Which values?</p>
-    <input type="text" id='text_vals' value=""  />
-    <input type="submit" id='btn_infer' value="" onclick="infer();" />"
-    
+    <input type="submit" id='btn_infer_types' value="Retrieve Model" onclick="infer_types();" />
+    <table id="values"></table>
+    <input type="submit" id='btn_infer' value="Submit" onclick="infer();" hidden/>
+    <div id="results"></div>
     
     
 
@@ -40,15 +40,65 @@
   </body>
 </html>
 <script>
+function infer_types() {
+  $.post('/api',
+        {'endpoint': 'infer_types',
+         'handle': $('#text_model').val()},
+        function(response) {
+          response = JSON.parse(response);
+          if (response["status"] != "OK") {
+            alert(JSON.stringify(response));
+          }
+          var types = response['types'];
+          var table = $('#values');
+          table.empty();
+          var th = document.createElement('th');
+          var td1 = document.createElement('td');
+          var td2 = document.createElement('td');
+          
+          td1.innerHTML = "Feature";
+          td2.innerHTML = "Value";
+          th.append(td1);
+          th.append(td2);
+          table.append(th);
+          
+          for (var key in types) {
+            if (key.indexOf("output_") != -1) {
+              continue;
+            }
+            var tr = document.createElement('tr');
+            var td1 = document.createElement('td');
+            var td2 = document.createElement('td');
+            var text = document.createElement('input');
+            text.type = 'text';
+            text.placeholder = types[key];
+            td1.innerHTML = key;
+            td2.append(text);
+            
+            tr.append(td1);
+            tr.append(td2);
+            table.append(tr);
+          }
+          $('#btn_infer').show();
+        }
+  );
+}
 function infer() {
+  var values = {};
+  $('#values tr').each(function(){
+    values[this.children[0].innerHTML] = [this.children[1].children[0].value];
+  });
   $.post('/api',
         {'endpoint': 'infer',
          'handle': $('#text_model').val(),
-         'values': $('#text_vals').val()},
+         'values': JSON.stringify(values)},
         function(response) {
+          response = JSON.parse(response);
           if (response['status'] != 'OK') {
-            alert(response);
+            alert(JSON.stringify(response));
           }
+          var div = document.getElementById('results');
+          div.innerHTML = JSON.stringify(response['result']);
         }
   );
 }

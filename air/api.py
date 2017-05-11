@@ -2,6 +2,8 @@ import json
 import math
 import os
 from db import get_model, new_model, save_model, delete_model, load_keras_models
+from keras.backend.tensorflow_backend import clear_session
+from model import ModelStatus
 
 LOSS_LENGTH = 0
 
@@ -18,9 +20,18 @@ def handleNaN(val):
   if math.isnan(val):
     return 0
   return val
+  
+@endpoint
+def infer_types(args, files):
+  try:
+    model = get_model(args['handle'])
+  except:
+    return json.dumps({'status': 'ERROR', 'why': 'Model probably not found'})
+  return json.dumps({'status': 'OK', 'types': model.types})
 
 @endpoint
 def infer(args, files):
+  clear_session()  # Clears TF graphs
   try:
     model = get_model(args['handle'])
   except:
@@ -29,10 +40,12 @@ def infer(args, files):
   if 'values' not in args:
     return json.dumps({'status': 'ERROR', 'why': 'No values specified'})
   
-  model.infer(values)
+  outputs = model.infer(json.loads(args['values']))
+  return json.dumps({'status': 'OK', 'result': outputs})
 
 @endpoint
 def train(args, files):
+  clear_session()  # Clears TF graphs
   try:
     model = get_model(args['handle'])
   except:
@@ -49,11 +62,15 @@ def train_status(args, files):
     model = get_model(args['handle'])
   except:
     return json.dumps({'status': 'ERROR', 'why': 'Model probably not found'})
+  if model.status == ModelStatus.TRAINED:
+    return json.dumps({'status': 'DONE'})
   losses = {}
   for model_name, value_dict in model.val_losses.iteritems():
     for metric_name, vals in value_dict.iteritems():
-      losses[model_name] = {metric_name: [handleNaN(x) for x in vals[LOSS_LENGTH:]]}
-      
+      if model_name in losses:
+        losses[model_name][metric_name] = [handleNaN(x) for x in vals[-LOSS_LENGTH:]]
+      else:
+        losses[model_name] = {metric_name: [handleNaN(x) for x in vals[-LOSS_LENGTH:]]}
   return json.dumps({'status': 'OK', 'val_losses': losses})
   
 @endpoint

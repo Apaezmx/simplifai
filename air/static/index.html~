@@ -135,9 +135,8 @@ function createGraphs(response) {
         .y(function(d) {return y(d.valLoss);});
 
     x.domain(d3.extent(data, function(d) { return d.x; }));
-    y.domain([d3.min(data, function(d) {
-	    return Math.min(d.loss, d.valLoss); }), 
-	    d3.max(data, function(d) { return Math.max(d.loss, d.valLoss); })]);
+    y.domain([0, Math.max(1, 
+	    d3.max(data, function(d) { return Math.max(d.loss, d.valLoss); }))]);
 
     svg.append("g")
         .attr("transform", "translate(0," + height + ")")
@@ -184,8 +183,10 @@ function doPoll(handle){
            function(data) {
             data = JSON.parse(data);
             updateGraphs(data);
-            if (data['status'] == 'DONE') {
+            if (data['status'] != 'DONE') {
               setTimeout(function(){doPoll(handle)},10000);
+            } else {
+              alert('Training done!');
             }
     });
 }

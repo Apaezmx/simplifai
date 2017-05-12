@@ -1,4 +1,5 @@
 import os
+from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, space_eval
 from keras.callbacks import ModelCheckpoint
 
 def info(title):
@@ -6,48 +7,36 @@ def info(title):
     print 'module name: ' +  __name__
     print 'parent process: ' + str(os.getppid())
     print 'process id: ' + str(os.getpid())
-    
-EPOCHS_PER_MODEL = 100
-TOTAL_EPOCHS = 1000
 
-def train(handle, train_epochs=30):
+def train(handle, train_epochs=50):
   from db import load_keras_models, get_model, save_model
   from model import ModelStatus
   info('Running training on new process')
   air_model = get_model(handle)
   air_model.status = ModelStatus.TRAINING
   save_model(air_model)
-  models = load_keras_models(handle)
-  X_train, Y_train = air_model.get_data_sets()
   
-  epoch = 0
-  go_crit = True
-  while go_crit:
-    print 'Epoch: ' + str(epoch) + ' num_models: ' + str(len(models))
-    epoch += 1
-    all_ended = True
-    for model_name, model in models.iteritems():
-      print 'Model: ' + model_name
-      checkpoint = ModelCheckpoint(air_model.model_path + '_' + model_name)
-      history = model.fit(X_train, Y_train, 
-                          batch_size=100, 
-                          nb_epoch=EPOCHS_PER_MODEL,
-                          callbacks=[checkpoint], 
-                          validation_split=0.2)
-      for layer in model.layers:
-        weights = layer.get_weights()
-      if model_name not in air_model.val_losses:
-        air_model.val_losses[model_name] = {}
-      for key, val in history.history.iteritems():
-        if key in air_model.val_losses[model_name]:
-          air_model.val_losses[model_name][key].extend(val)
-        else:
-          air_model.val_losses[model_name][key] = val
-      if history.history['loss'][0] > 0.01:
-        all_ended = False 
-      save_model(air_model)
-    go_crit = not all_ended and epoch < TOTAL_EPOCHS / EPOCHS_PER_MODEL
+  fspace = {
+    'optimizer': hp.choice('optimzer', ['rmsprop', 'sgd', 'adagrad']),
+    'width': hp.choice('width', range(1,10)),
+    'depth': hp.choice('depth', range(1,10)),
+    'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh']),
+    'dropout': hp.uniform('dropout', 0.1, 0.4),
+    'batch_size': hp.choice('batch_size', [32, 64, 128, 256])
+  }
+
+  trials = Trials()
+  best = fmin(fn=air_model.run_model(), space=fspace, algo=tpe.suggest, max_evals=train_epochs, trials=trials)
+
+  print 'best:', space_eval(fspace, best)
+
+  print 'trials:'
+  for trial in trials.trials[:2]:
+      print trial
   
   print 'Training finished'
-  air_model.stats = ModelStatus.TRAINED
+  air_model.status = ModelStatus.TRAINED
+  air_model.best_model = best
   save_model(air_model)
+  model_fn = air_model.run_model(persist=True)
+  model_fn(space_eval(fspace, best))  # Train and persist best model.

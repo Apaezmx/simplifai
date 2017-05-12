@@ -1,6 +1,7 @@
 import json
 import numpy as np
-import keras.backend as K
+from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
+from keras.callbacks import ModelCheckpoint
 from keras.models import Sequential
 from keras.layers import Embedding, Dense, Activation, Merge, Flatten, Dropout
 from keras.layers.normalization import BatchNormalization
@@ -13,12 +14,7 @@ import numpy as np
 import os
 import os.path
 
-# Layers for now will have a constant width across layers. It has a constant number of width specified by WIDE_RANGE
-# plus a dynamic number which depends on the number of inputs. That is we will add WIDE_RATIO neurons for each input.
-WIDE_RANGE = 2
-DEEP_RANGE = 2
-WIDE_RATIO = 5
-MIN_DEPTH = 1
+VAL_SPLIT = 0.2  # Split of data to use as validation.
 
 class ModelStatus():
   NULL = 0
@@ -53,6 +49,9 @@ class Model():
   
   # Keras models history.
   val_losses = {}
+  
+  # Best model params.
+  best_model = ''
 
   def __init__(self, path=''):
     self.model_path = path
@@ -90,108 +89,133 @@ class Model():
     counts = [word_freq[word] for word in words.keys()]
     return words, counts
 
-  def build_models(self):
-    start_depth = len(self.data) + MIN_DEPTH
-    start_width = len(self.types)
-    output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')]
-    if not output_headers:
-      raise ValueError('No outputs defined!')
-    
-    # Process string features.
-    self.string_features = []
-    for header, typ in self.types.iteritems():
-      if typ != 'str':
-        continue
-      # Every string feature is treated as a list of words.
-      word_list = [x.split() for x in self.data[header]]
-      dict_, _ = self.process_text_feature(word_list)
-      assert len(dict_) > 0, 'Dict is empty.'
-      self.embedding_dicts[header] = dict_
-      lengths = [len(words) for words in word_list]
-      lengths.sort()
-      input_size = lengths[int(np.round(len(lengths) * 0.95))]
-      assert input_size > 0, 'input_size is 0.'
-      for idx, words in enumerate(word_list):
-        # Strings to integers. Pad sequences with zeros so that all of them have the same size.
-        word_list[idx] = pad_sequences([[dict_[word] for word in words]], 
-                                       maxlen=input_size, padding='post', 
-                                       truncating='post')[0].tolist()
-      self.string_features.append((header, word_list))
-    
-    # Build models.
-    # Merge all inputs into one model.
-    def init_model(self):
-      feature_models = []
-      total_input_size = 0
-      for tup in self.string_features:
-        header = tup[0]
-        word_list = tup[1]
-        sequence_length = len(word_list[0])
-        embedding_size = int(np.round(np.log10(len(self.embedding_dicts[header]))))
-        embedding_size = embedding_size if embedding_size > 0 else 1
-        model = Sequential()
-        model.add(Embedding(len(self.embedding_dicts[header].keys()), embedding_size, input_length=sequence_length))
-        model.add(Flatten())
-        total_input_size += embedding_size * len(word_list[0])
-        feature_models.append(model)
+  def run_model(self, persist=False):
+    def run_model_fn(hp):
+      """
+        hp: hyperparameter dictionary.
+      """
+      print str(hp)
+      output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')]
+      if not output_headers:
+        raise ValueError('No outputs defined!')
       
-      numeric_inputs = len(self.data) - len(self.string_features) - len(output_headers)
-      num_model = Sequential()
-      num_model.add(Dense(numeric_inputs, input_shape=(numeric_inputs,)))
-      total_input_size += numeric_inputs
-      feature_models.append(num_model)
+      # Process string features.
+      self.string_features = []
+      for header, typ in self.types.iteritems():
+        if typ != 'str':
+          continue
+        # Every string feature is treated as a list of words.
+        word_list = [x.split() for x in self.data[header]]
+        dict_, _ = self.process_text_feature(word_list)
+        assert len(dict_) > 0, 'Dict is empty.'
+        self.embedding_dicts[header] = dict_
+        lengths = [len(words) for words in word_list]
+        lengths.sort()
+        input_size = lengths[int(np.round(len(lengths) * 0.95))]
+        assert input_size > 0, 'input_size is 0.'
+        for idx, words in enumerate(word_list):
+          # Strings to integers. Pad sequences with zeros so that all of them have the same size.
+          word_list[idx] = pad_sequences([[dict_[word] for word in words]], 
+                                         maxlen=input_size, padding='post', 
+                                         truncating='post')[0].tolist()
+        self.string_features.append((header, word_list))
       
-      merged_model = Sequential()
-      if len(feature_models) < 0:
-        raise ValueError('No models built, no inputs?')
-      elif len(feature_models) == 1:
-        merged_model = feature_models[0]
-      else:
-        merged_model.add(Merge(feature_models, mode='concat', concat_axis=1))
-      return merged_model, total_input_size
-    
-    # We will build in total DEEP_RANGE*WIDE_RANGE models.
-    keras_models = {}
-    optimizers = [(RMSprop(), 'RMSprop'), (SGD(), 'SGD'), (Adagrad(), 'Adagrad')]
-    for optimizer in optimizers:
-      for depth in range(start_depth, start_depth + DEEP_RANGE):
-        for width in range(start_width, start_width + WIDE_RANGE):
-          model, input_size = init_model(self)
-          net_width = width + input_size * WIDE_RATIO
-          
-          # We will add 'depth' layers with 'net_width' neurons.
-          for i in range(depth):
-            if i == 0:
-              model.add(Dense(net_width, input_shape=(input_size,)))
-              model.add(Activation('relu'))
-              model.add(Dropout(0.2))
-            elif i == depth - 1:
-              model.add(Dense(len(output_headers), input_shape=(net_width,)))
-              model.add(Activation('relu'))
-              model.add(Dropout(0.2))
-            else:
-              model.add(Dense(net_width, input_shape=(net_width,)))
-              model.add(Activation('relu'))
-              model.add(Dropout(0.2))
-          
-          # Add a last 'scaler' for output normalization.
-          model.add(Dense(len(output_headers), input_shape=(len(output_headers),)))
+      # Build models.
+      # Merge all inputs into one model.
+      def init_model(self):
+        feature_models = []
+        total_input_size = 0
+        for tup in self.string_features:
+          header = tup[0]
+          word_list = tup[1]
+          sequence_length = len(word_list[0])
+          embedding_size = int(np.round(np.log10(len(self.embedding_dicts[header]))))
+          embedding_size = embedding_size if embedding_size > 0 else 1
+          model = Sequential()
+          model.add(Embedding(len(self.embedding_dicts[header].keys()), embedding_size, input_length=sequence_length))
+          model.add(Flatten())
+          total_input_size += embedding_size * len(word_list[0])
+          feature_models.append(model)
+        
+        numeric_inputs = len(self.data) - len(self.string_features) - len(output_headers)
+        num_model = Sequential()
+        num_model.add(Dense(numeric_inputs, input_shape=(numeric_inputs,)))
+        total_input_size += numeric_inputs
+        feature_models.append(num_model)
+        
+        merged_model = Sequential()
+        if len(feature_models) < 0:
+          raise ValueError('No models built, no inputs?')
+        elif len(feature_models) == 1:
+          merged_model = feature_models[0]
+        else:
+          merged_model.add(Merge(feature_models, mode='concat', concat_axis=1))
+        return merged_model, total_input_size
+      
+      # We will build in total DEEP_RANGE*WIDE_RANGE models.
+      optimizer = hp['optimizer']
+      width = hp['width']
+      depth = hp['depth']
+      activation = hp['activation']
+      dropout = hp['dropout']
+      batch_size = hp['batch_size']
+      
+      model, input_size = init_model(self)
+      net_width = input_size * width
+      
+      # We will add 'depth' layers with 'net_width' neurons.
+      for i in range(depth):
+        if i == 0:
+          model.add(Dense(net_width, input_shape=(input_size,)))
+          model.add(Activation(activation))
+          model.add(Dropout(dropout))
+        elif i == depth - 1:
+          model.add(Dense(len(output_headers), input_shape=(net_width,)))
+          model.add(Activation(activation))
+          model.add(Dropout(dropout))
+        else:
+          model.add(Dense(net_width, input_shape=(net_width,)))
+          model.add(Activation(activation))
+          model.add(Dropout(dropout))
+      
+      # Add a last 'scaler' for output normalization.
+      model.add(Dense(len(output_headers), input_shape=(len(output_headers),)))
 
-          # No Activation in the end for now... Assuming regression always.
-          model.summary()
-          model.compile(loss='mse',
-                optimizer=optimizer[0],
-                metrics=['accuracy'])
-          
-          keras_models[str(net_width) + 'x' + str(depth) + '-' + optimizer[1]] = model
-    """model, input_size = init_model(self)  
-    model.summary()
-    model.compile(loss='mae', optimizer=RMSprop(), metrics=['accuracy'])
-       
-    keras_models["The_model"] = model"""
+      # No Activation in the end for now... Assuming regression always.
+      model.compile(loss='mse',
+            optimizer=optimizer,
+            metrics=['accuracy'])
+      nb_epoch = len(self.data.values()[0]) / 40
+      if persist:
+        nb_epoch = len(self.data.values()[0]) / 20
+      
+      model_name = str(hp).replace('{', '').replace('}', '')
+      X_train, Y_train = self.get_data_sets()
+      history = model.fit(X_train, Y_train, 
+                          batch_size=batch_size, 
+                          nb_epoch=nb_epoch,
+                          validation_split=VAL_SPLIT)
+      if persist:
+        # Save the model for inference purposes.
+        from db import persist_keras_models
+        persist_keras_models(self.get_handle(), {model_name: model})
+      else:
+        # Save metrics of this run.
+        if model_name not in self.val_losses:
+          self.val_losses[model_name] = {}
+        for key, val in history.history.iteritems():
+          if key in self.val_losses[model_name]:
+            self.val_losses[model_name][key].extend(val)
+          else:
+            self.val_losses[model_name][key] = val
+        from db import save_model
+        save_model(self)
+        
+      total_dataset_loss = VAL_SPLIT * history.history['val_loss'][0] 
+      + (1 - VAL_SPLIT) * history.history['loss'][0]
+      return {'loss': total_dataset_loss, 'status': STATUS_OK}
+    return run_model_fn
     
-    from db import persist_keras_models
-    persist_keras_models(self.get_handle(), keras_models)
   
   # Slices 'data' into lists where each row contains all features. 
   def get_data_sets(self, data=None, string_features=None):
@@ -271,12 +295,15 @@ class Model():
     self.normalize_values(values)
     string_data = self.intergerize_string(values)
     X_infer, _ = self.get_data_sets(data=values, string_features=string_data)
+    print 'X_infer: ' + str(X_infer)
+    print 'norms: ' + str(self.norms)
     outputs = {}
     for model_name, model in models.iteritems():
       out = model.predict(X_infer).tolist()
-      print str(X_infer) + ' ' + str(out) + ' ' + str(self.norms)
+      print 'Raw out: ' + str(out)
       for idx, value in enumerate(out[0]):
         outputs[model_name] = [self.normalize_float(value, output_headers[0], reverse=True)]
+    print 'Outputs ' + str(outputs)
     return outputs
     
 

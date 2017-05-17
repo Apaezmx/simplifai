@@ -190,7 +190,7 @@ class Model():
         nb_epoch = len(self.data.values()[0]) / 20
       
       model_name = str(hp).replace('{', '').replace('}', '')
-      X_train, Y_train = self.get_data_sets()
+      X_train, Y_train = self.get_data_sets(sample=True)  # Only use a small sample.
       history = model.fit(X_train, Y_train, 
                           batch_size=batch_size, 
                           nb_epoch=nb_epoch,
@@ -218,7 +218,7 @@ class Model():
     
   
   # Slices 'data' into lists where each row contains all features. 
-  def get_data_sets(self, data=None, string_features=None):
+  def get_data_sets(self, data=None, string_features=None, sample=False):
     data = data if data else self.data
     string_features = string_features if string_features else self.string_features
 
@@ -242,8 +242,11 @@ class Model():
       nums.append(row)
       
     X_train.append(np.array(nums))
-     
-    return X_train, Y_train
+    
+    if sample:
+      return X_train[:10000], Y_train[:10000]
+    else:
+      return X_train, Y_train
       
   # TODO: implement distributed training :O.
   # For now kick-off new process which round-robins doing one epoch each time.

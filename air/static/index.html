@@ -7,7 +7,7 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <title>IA</title>
 
-    <!-- Bootstrap and custom CSS -->
+    <!-- Bootstrap and custom.css-->
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/normalize.css" rel="stylesheet">
     <link href="css/custom.css" rel="stylesheet">
@@ -24,7 +24,7 @@
   </head>
   <body>
       
-    <nav class="navbar navbar-default navbar-fixed-top">
+      <nav class="navbar navbar-default navbar-fixed-top">
           <div class="container-fluid">
             <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header">
@@ -62,12 +62,12 @@
             
             <form action="/api" id="uploader" method="post" enctype="multipart/form-data">
                 <div class="form-group has-success">
-                        <input type="file" class="form-control form-control-success" id="inputSuccess"/>
+                        <input type="file" name="upload" class="form-control form-control-success" id="inputSuccess"/>
                         <div class="form-control feedback">Success! You've done it.</div>
                 </div>
                 
                 <div class="input-group">
-                    <button type="submit" class="btn btn-primary">Start upload</button>
+                    <button type="submit" value="Start upload" class="btn btn-primary">Start upload</button>
                 </div>
                 <input type="text" name="endpoint" value="upload_csv" hidden/>
             </form>
@@ -228,8 +228,8 @@ function doPoll(handle){
             'handle': handle},
            function(data) {
             data = JSON.parse(data);
+            updateGraphs(data);
             if (data['status'] != 'DONE') {
-              updateGraphs(data);
               setTimeout(function(){doPoll(handle)},10000);
             } else {
               alert('Training done!');
@@ -274,4 +274,3 @@ function stopUpload(response){
       return true;   
 }
 </script> 
-

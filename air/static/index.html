@@ -67,7 +67,7 @@
                 </div>
                 
                 <div class="input-group">
-                    <button type="submit" value="Start upload" class="btn btn-primary">Start upload</button>
+                    <button type="submit" value="Start upload" class="btn btn-primary btn-lg" id="load" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Processing Order" >Start upload</button>
                 </div>
                 <input type="text" name="endpoint" value="upload_csv" hidden/>
             </form>
@@ -91,7 +91,17 @@
     <script src="js/bootstrap.min.js"></script>
   </body>
 </html>
+
 <script>
+
+$('.btn .btn-primary .btn-lg').on('click', function() {
+    var $this = $(this);
+  $this.button('loading');
+    setTimeout(function() {
+       $this.button('reset');
+   }, 8000);
+});
+    
 var model = "";
 $('#uploader').submit(function(e) {
     startUpload();

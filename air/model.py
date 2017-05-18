@@ -185,7 +185,7 @@ class Model():
       model.compile(loss='mse',
             optimizer=optimizer,
             metrics=['accuracy'])
-      nb_epoch = len(self.data.values()[0]) / 40
+      nb_epoch = 100
       if persist:
         nb_epoch = len(self.data.values()[0]) / 20
       
@@ -221,12 +221,15 @@ class Model():
   def get_data_sets(self, data=None, string_features=None, sample=False):
     data = data if data else self.data
     string_features = string_features if string_features else self.string_features
-
+    SAMPLE_SIZE = 10000
     X_train = []
     Y_train = []
 
     for tup in string_features:
-      X_train.append(np.array(tup[1]))
+      if sample:
+        X_train.append(np.array(tup[1][:SAMPLE_SIZE]))
+      else:
+        X_train.append(np.array(tup[1]))
 
     nums = []
     for idx in xrange(len(data.itervalues().next())):
@@ -240,13 +243,12 @@ class Model():
         row.append(feature[idx])
  
       nums.append(row)
+      if sample and len(nums) == SAMPLE_SIZE:
+        break
       
     X_train.append(np.array(nums))
     
-    if sample:
-      return X_train[:10000], Y_train[:10000]
-    else:
-      return X_train, Y_train
+    return X_train, Y_train
       
   # TODO: implement distributed training :O.
   # For now kick-off new process which round-robins doing one epoch each time.

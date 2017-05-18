@@ -9,6 +9,7 @@
 
     <!-- Bootstrap and custom CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/normalize.css" rel="stylesheet">
     <link href="css/custom.css" rel="stylesheet">
     
     <!-- D3.js -->
@@ -22,16 +23,61 @@
     <![endif]-->
   </head>
   <body>
-    <h1>IA!</h1>
-    
-    <p id="f1_upload_process">Loading...<br/><img src="loader.gif" /></p><br />
-    <p id="result"></p>
-    <p>Upload a CSV to train your model</p>
-    <form action="/api" id="uploader" method="post" enctype="multipart/form-data">
-      Select a file: <input type="file" name="upload" />
-      <input type="submit" value="Start upload" />
-      <input type="text" name="endpoint" value="upload_csv" hidden/>
-    </form>               
+      
+    <nav class="navbar navbar-default navbar-fixed-top">
+          <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="#">Minatini</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav navbar-right">
+                <li><a href="#">About</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Services<span class="caret"></span></a>
+                  <ul class="dropdown-menu">
+                    <li><a href="#">Train a model</a></li>
+                    <li><a href="#">Predictions</a></li>
+                  </ul>
+                </li>
+                <li><a href="#">Contact</a></li>
+              </ul>
+            </div><!-- /.navbar-collapse -->
+          </div><!-- /.container-fluid -->
+        </nav>
+      
+    <div class="jumbotron">
+        <div class="container">
+            <br>
+            <h1>Upload a .CSV to train your model!</h1>
+            <br/><br/><br/>
+            
+            <form action="/api" id="uploader" method="post" enctype="multipart/form-data">
+                <div class="form-group has-success">
+                        <input type="file" class="form-control form-control-success" id="inputSuccess"/>
+                        <div class="form-control feedback">Success! You've done it.</div>
+                </div>
+                
+                <div class="input-group">
+                    <button type="submit" class="btn btn-primary">Start upload</button>
+                </div>
+                <input type="text" name="endpoint" value="upload_csv" hidden/>
+            </form>
+            
+            <p id="f1_upload_process">Loading...<br/><img src="loader.gif" /></p><br/>
+            
+            <p id="result"></p>
+        </div>
+    </div><!-- jumbotron -->
+                  
     <div id="types"></div>
     <input type="submit" id='btn_train' value="Start Training" onclick="startTraining();" hidden />
     <div id="graphs">

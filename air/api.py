@@ -25,8 +25,8 @@ def handleNaN(val):
 def infer_types(args, files):
   try:
     model = get_model(args['handle'])
-  except:
-    return json.dumps({'status': 'ERROR', 'why': 'Model probably not found'})
+  except Exception as e:
+    return json.dumps({'status': 'ERROR', 'why': 'Model probably not found '  + str(e)})
   return json.dumps({'status': 'OK', 'types': model.types})
 
 @endpoint
@@ -34,8 +34,8 @@ def infer(args, files):
   clear_session()  # Clears TF graphs
   try:
     model = get_model(args['handle'])
-  except:
-    return json.dumps({'status': 'ERROR', 'why': 'Model probably not found'})
+  except Exception as e:
+    return json.dumps({'status': 'ERROR', 'why': 'Model probably not found ' + str(e)})
     
   if 'values' not in args:
     return json.dumps({'status': 'ERROR', 'why': 'No values specified'})

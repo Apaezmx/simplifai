@@ -14,8 +14,6 @@ import numpy as np
 import os
 import os.path
 
-VAL_SPLIT = 0.2  # Split of data to use as validation.
-
 class ModelStatus():
   NULL = 0
   CREATED = 1
@@ -165,32 +163,29 @@ class Model():
       
       # We will add 'depth' layers with 'net_width' neurons.
       for i in range(depth):
-        if i == 0:
+        if i == 0 and depth != 1:
           model.add(Dense(net_width, input_shape=(input_size,)))
           model.add(Activation(activation))
           model.add(Dropout(dropout))
         elif i == depth - 1:
           model.add(Dense(len(output_headers), input_shape=(net_width,)))
           model.add(Activation(activation))
-          model.add(Dropout(dropout))
         else:
           model.add(Dense(net_width, input_shape=(net_width,)))
           model.add(Activation(activation))
           model.add(Dropout(dropout))
-      
-      # Add a last 'scaler' for output normalization.
-      model.add(Dense(len(output_headers), input_shape=(len(output_headers),)))
 
       # No Activation in the end for now... Assuming regression always.
       model.compile(loss='mse',
             optimizer=optimizer,
             metrics=['accuracy'])
-      nb_epoch = 100
+      nb_epoch = 20
       if persist:
-        nb_epoch = len(self.data.values()[0]) / 20
+        nb_epoch = 300
       
       model_name = str(hp).replace('{', '').replace('}', '')
       X_train, Y_train = self.get_data_sets(sample=True)  # Only use a small sample.
+      VAL_SPLIT = 0.1  # Split of data to use as validation.
       history = model.fit(X_train, Y_train, 
                           batch_size=batch_size, 
                           nb_epoch=nb_epoch,
@@ -221,7 +216,7 @@ class Model():
   def get_data_sets(self, data=None, string_features=None, sample=False):
     data = data if data else self.data
     string_features = string_features if string_features else self.string_features
-    SAMPLE_SIZE = 10000
+    SAMPLE_SIZE = 100000
     X_train = []
     Y_train = []
 
@@ -278,7 +273,7 @@ class Model():
       input_size = None
       for tup in self.string_features:
         if header == tup[0]:
-          input_size = len(tup[1])
+          input_size = len(tup[1][0])
           break
       dict_ = self.embedding_dicts[header]
       for idx, words in enumerate(word_list):

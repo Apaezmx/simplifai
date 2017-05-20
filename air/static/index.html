@@ -231,8 +231,8 @@ function doPoll(handle){
             'handle': handle},
            function(data) {
             data = JSON.parse(data);
-            updateGraphs(data);
             if (data['status'] != 'DONE') {
+              updateGraphs(data);
               setTimeout(function(){doPoll(handle)},10000);
             } else {
               alert('Training done!');

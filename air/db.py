@@ -134,6 +134,13 @@ def load_csvs(file_list):
         ceil = float(max(column))
         norms[header] = (floor, ceil)
         data[header] = [(x-floor)/(ceil - floor) for x in column]
+    length = 0
+    for header, column in data.iteritems():
+      if not length:
+        length = len(column)
+        continue
+      if length != len(column):
+        raise ValueError(header + ' column has different lengths: ' + str(length) + ' ' + str(len(column)))
     return data, types, norms
 
 def random_hex():

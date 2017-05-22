@@ -1,4 +1,11 @@
 # README #
+## Overview ##
+
+Air is a server which takes in a feature file (only CSVs are supported for now) and runs a hyperparameter optimization algorithm over deep network architectures to find the optimal candidate. Once the appropriate candidate is found, it is extensively trained, and saved for inference.
+
+Once the model is saved, the user can access the model and run new data for predictions.
+
+The server is written in Python 2.7 using Bottle (TODO: migrate to Flask). The server is completely JSON based outside static HTMLs. Every query to the server can be made as a POST request. No authentication has been added **yet**.
 
 ## Installing and Running ##
 

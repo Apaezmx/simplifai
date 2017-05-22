@@ -35,3 +35,5 @@ Try to comment as much as possible. **Follow existing standards**. Line length i
 ## Git guidelines ##
 
 Main work is on master branch. Try to submit atomic, fully functioning changes. Test the server before every commit. No code review necessary yet. Remember to update reqs.txt if you add dependencies. Do not upload data files bigger than 10 MB.
+
+**If you are merging from a local branch, try to squash commits so that you do not upload merge commits.**

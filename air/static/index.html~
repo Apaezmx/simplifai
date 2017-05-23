@@ -14,6 +14,8 @@
     
     <!-- D3.js -->
     <script src="https://d3js.org/d3.v4.min.js"></script>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -67,14 +69,38 @@
                 </div>
                 
                 <div class="input-group">
-                    <button type="submit" value="Start upload" class="btn btn-primary btn-lg" id="load" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Processing Order" >Start upload</button>
+                    <button type="submit" value="Start upload" class="btn btn-primary btn-lg" id="load" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Uploading" >Start upload</button>
                 </div>
+                
+                <script type="text/javascript">
+                
+                    $('.btn').on('click', function() {
+                        var $this = $(this);
+                        $this.button('loading');
+                        setTimeout(function() {
+                           $this.button('reset');
+                       }, 1000);
+                    });
+                    
+                </script>
+                
+
+                
                 <input type="text" name="endpoint" value="upload_csv" hidden/>
+                
             </form>
             
-            <p id="f1_upload_process">Loading...<br/><img src="loader.gif" /></p><br/>
+            <br/><br/>
+            <div class="alert alert-success" role="alert">
+                <p id="result">Your file was uploaded successfully!</p>
+            </div>
             
-            <p id="result"></p>
+            <!--
+            <p id="f1_upload_process">Loading...<br/><img src="loader.gif" /></p><br/>
+            -->
+            
+            
+            
         </div>
     </div><!-- jumbotron -->
                   
@@ -85,23 +111,14 @@
     
     
 
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="js/bootstrap.min.js"></script>
   </body>
 </html>
 
-<script>
+<script type="text/javascript">
 
-$('.btn').on('click', function() {
-    var $this = $(this);
-  $this.button('loading');
-    setTimeout(function() {
-       $this.button('reset');
-   }, 8000);
-});
-    
 var model = "";
 $('#uploader').submit(function(e) {
     startUpload();
@@ -119,14 +136,16 @@ $('#uploader').submit(function(e) {
                 JSON.parse(response);
             } catch (e) {
                 alert(response);
-                document.getElementById('f1_upload_process').style.visibility = 'hidden';
+               /* document.getElementById('f1_upload_process').style.visibility = 'hidden';
+               */
                 return;
             }
             stopUpload(JSON.parse(response));
         },
         error : function(response) {
             alert(response);
-            document.getElementById('f1_upload_process').style.visibility = 'hidden';
+           /* document.getElementById('f1_upload_process').style.visibility = 'hidden';
+           */
         }
     });
 });
@@ -148,6 +167,31 @@ function startTraining() {
   doPoll(model);
 }
 
+function wrap(text, width) {
+  text.each(function() {
+    var text = d3.select(this),
+        words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1, // ems
+        y = text.attr("y"),
+        dy = 0,
+        dx = Math.floor(width / 2),
+        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em").attr("dx", dx + "px");
+    while (word = words.pop()) {
+      line.push(word);
+      tspan.text(line.join(" "));
+      if (tspan.node().getComputedTextLength() > width) {
+        line.pop();
+        tspan.text(line.join(" "));
+        line = [word];
+        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").attr("dx", dx + "em").text(word);
+      }
+    }
+  });
+}
+
 function createGraphs(response) {
   for (var key in response['val_losses']) {
     var valLoss = response["val_losses"][key]["val_loss"];
@@ -166,7 +210,7 @@ function createGraphs(response) {
       data.push({'loss': l, 'valLoss': v, 'x':j})
     }
     
-    margin = {top: 40, right: 20, bottom: 40, left: 90},
+    margin = {top: 80, right: 20, bottom: 40, left: 90},
     width = 500 - margin.left - margin.right,
     height = 300 - margin.top - margin.bottom;
     
@@ -218,13 +262,14 @@ function createGraphs(response) {
         .attr("stroke-linecap", "round")
         .attr("stroke-width", 1.5)
         .attr("d", valLossLine);
-        
+
     svg.append("text")
         .attr("x", (width / 2))             
         .attr("y", 0 - (margin.top / 2))
         .attr("text-anchor", "middle")  
         .style("font-size", "16px") 
-        .text("Model " + key);
+        .text(key)
+        .call(wrap, width);
   }
   
 }
@@ -238,8 +283,8 @@ function doPoll(handle){
             'handle': handle},
            function(data) {
             data = JSON.parse(data);
-            updateGraphs(data);
             if (data['status'] != 'DONE') {
+              updateGraphs(data);
               setTimeout(function(){doPoll(handle)},10000);
             } else {
               alert('Training done!');
@@ -249,7 +294,9 @@ function doPoll(handle){
 
 
 function startUpload() {
-    document.getElementById('f1_upload_process').style.visibility = 'visible';
+    
+   /* document.getElementById('f1_upload_process').style.visibility = 'visible';
+   */
     return true;
 }
 function stopUpload(response){
@@ -280,7 +327,8 @@ function stopUpload(response){
          document.getElementById('result').innerHTML = 
            '<span class="emsg">There was an error during file upload!<\/span><br/><br/>';
       }
-      document.getElementById('f1_upload_process').style.visibility = 'hidden';
+     /* document.getElementById('f1_upload_process').style.visibility = 'hidden';
+     */
       return true;   
 }
 </script> 

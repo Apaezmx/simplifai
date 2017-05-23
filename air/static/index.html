@@ -14,6 +14,8 @@
     
     <!-- D3.js -->
     <script src="https://d3js.org/d3.v4.min.js"></script>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -109,8 +111,7 @@
     
     
 
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="js/bootstrap.min.js"></script>
   </body>
@@ -166,6 +167,31 @@ function startTraining() {
   doPoll(model);
 }
 
+function wrap(text, width) {
+  text.each(function() {
+    var text = d3.select(this),
+        words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1, // ems
+        y = text.attr("y"),
+        dy = 0,
+        dx = Math.floor(width / 2),
+        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em").attr("dx", dx + "px");
+    while (word = words.pop()) {
+      line.push(word);
+      tspan.text(line.join(" "));
+      if (tspan.node().getComputedTextLength() > width) {
+        line.pop();
+        tspan.text(line.join(" "));
+        line = [word];
+        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").attr("dx", dx + "px").text(word);
+      }
+    }
+  });
+}
+
 function createGraphs(response) {
   for (var key in response['val_losses']) {
     var valLoss = response["val_losses"][key]["val_loss"];
@@ -184,7 +210,7 @@ function createGraphs(response) {
       data.push({'loss': l, 'valLoss': v, 'x':j})
     }
     
-    margin = {top: 40, right: 20, bottom: 40, left: 90},
+    margin = {top: 80, right: 20, bottom: 40, left: 90},
     width = 500 - margin.left - margin.right,
     height = 300 - margin.top - margin.bottom;
     
@@ -236,13 +262,14 @@ function createGraphs(response) {
         .attr("stroke-linecap", "round")
         .attr("stroke-width", 1.5)
         .attr("d", valLossLine);
-        
+
     svg.append("text")
         .attr("x", (width / 2))             
         .attr("y", 0 - (margin.top / 2))
         .attr("text-anchor", "middle")  
         .style("font-size", "16px") 
-        .text("Model " + key);
+        .text(key)
+        .call(wrap, width);
   }
   
 }

@@ -17,12 +17,10 @@ def train(handle, train_epochs=50):
   save_model(air_model)
   
   fspace = {
-    'optimizer': hp.choice('optimzer', ['rmsprop', 'sgd', 'adagrad']),
+    'optimizer': hp.choice('optimzer', ['rmsprop', 'adagrad']),
     'width': hp.choice('width', range(1,10)),
     'depth': hp.choice('depth', range(1,10)),
-    'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh']),
-    'dropout': hp.uniform('dropout', 0.1, 0.4),
-    'batch_size': hp.choice('batch_size', [32, 64, 128, 256])
+    'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh'])
   }
 
   trials = Trials()

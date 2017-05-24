@@ -155,8 +155,8 @@ class Model():
       width = hp['width']
       depth = hp['depth']
       activation = hp['activation']
-      dropout = hp['dropout']
-      batch_size = hp['batch_size']
+      dropout = 0.2  # hp['dropout']
+      batch_size = 128  # hp['batch_size']
       
       model, input_size = init_model(self)
       net_width = input_size * width
@@ -181,7 +181,7 @@ class Model():
             metrics=['accuracy'])
       nb_epoch = 20
       if persist:
-        nb_epoch = 300
+        nb_epoch = 500
       
       model_name = str(hp).replace('{', '').replace('}', '')
       X_train, Y_train = self.get_data_sets(sample=True)  # Only use a small sample.
@@ -216,13 +216,15 @@ class Model():
   def get_data_sets(self, data=None, string_features=None, sample=False):
     data = data if data else self.data
     string_features = string_features if string_features else self.string_features
-    SAMPLE_SIZE = 100000
+    sample_size = len(string_features[0][1])
+    if sample_size > 10000:
+      sample_size = sample_size / 10
     X_train = []
     Y_train = []
 
     for tup in string_features:
       if sample:
-        X_train.append(np.array(tup[1][:SAMPLE_SIZE]))
+        X_train.append(np.array(tup[1][:sample_size]))
       else:
         X_train.append(np.array(tup[1]))
 
@@ -238,7 +240,7 @@ class Model():
         row.append(feature[idx])
  
       nums.append(row)
-      if sample and len(nums) == SAMPLE_SIZE:
+      if sample and len(nums) == sample_size:
         break
       
     X_train.append(np.array(nums))

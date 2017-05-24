@@ -41,5 +41,5 @@ def start():
   parser.add_argument('--root_path', type=str, help='filepath to server root')
   args = parser.parse_args()
 
-  run(reloader=True, host='localhost', port=8080, server='cherrypy')
+  run(reloader=True, host='localhost', port=8012, server='cherrypy')
 start()

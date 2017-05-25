@@ -19,10 +19,15 @@ def serve_api():
   endpoint = request.forms.get('endpoint')
   if not endpoint:
     return 'Endpoint not found'
-  return resolve_endpoint(endpoint, 
+  response = resolve_endpoint(endpoint, 
           {k: v for k, v in request.forms.iteritems()},
           {k: v for k, v in request.files.iteritems()})
+  return response
 
+@route('/infer')
+def serve_index():
+  return static_file('infer.html', root=config.STATIC_PATH)
+  
 @route('/')
 def serve_index():
   return static_file('index_tests.html', root=config.STATIC_PATH)
@@ -36,5 +41,5 @@ def start():
   parser.add_argument('--root_path', type=str, help='filepath to server root')
   args = parser.parse_args()
 
-  run(reloader=True, host='localhost', port=8080, server='cherrypy')
+  run(reloader=True, host='localhost', port=8012, server='cherrypy')
 start()

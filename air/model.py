@@ -216,7 +216,7 @@ class Model():
   def get_data_sets(self, data=None, string_features=None, sample=False):
     data = data if data else self.data
     string_features = string_features if string_features else self.string_features
-    sample_size = len(string_features[0][1])
+    sample_size = len(data.itervalues().next())
     if sample_size > 10000:
       sample_size = sample_size / 10
     X_train = []

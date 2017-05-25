@@ -12,8 +12,12 @@
     <link href="css/normalize.css" rel="stylesheet">
     <link href="css/custom.css" rel="stylesheet">
     
-    <!-- D3.js -->
-    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <!-- Load c3.css -->
+    <link href="/path/to/c3.css" rel="stylesheet" type="text/css">
+      
+    <!-- D3.js and C3.js -->
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="/path/to/c3.min.js"></script>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -91,6 +95,7 @@
     <script src="js/bootstrap.min.js"></script>
   </body>
 </html>
+
 <script>
 var model = "";
 $('#uploader').submit(function(e) {
@@ -137,6 +142,13 @@ function startTraining() {
   );
   doPoll(model);
 }
+    
+var chart;
+function generateChart() ({
+    chart = c3.generate({
+    bindto: '#graphs'
+    });
+})
 
 function createGraphs(response) {
   for (var key in response['val_losses']) {
@@ -155,7 +167,10 @@ function createGraphs(response) {
       }
       data.push({'loss': l, 'valLoss': v, 'x':j})
     }
+      
+    alert(data[0]['loss']);
     
+    /*
     margin = {top: 40, right: 20, bottom: 40, left: 90},
     width = 500 - margin.left - margin.right,
     height = 300 - margin.top - margin.bottom;
@@ -215,11 +230,15 @@ function createGraphs(response) {
         .attr("text-anchor", "middle")  
         .style("font-size", "16px") 
         .text("Model " + key);
+  */
   }
   
 }
 function updateGraphs(response) {
    $('#graphs').empty();
+   /*
+   generateChart();
+   */
    createGraphs(response);
 }
 function doPoll(handle){

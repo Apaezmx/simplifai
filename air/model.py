@@ -206,8 +206,8 @@ class Model():
         from db import save_model
         save_model(self)
         
-      total_dataset_loss = VAL_SPLIT * history.history['val_loss'][0] 
-      + (1 - VAL_SPLIT) * history.history['loss'][0]
+      total_dataset_loss = VAL_SPLIT * history.history['val_loss'][-1] 
+      + (1 - VAL_SPLIT) * history.history['loss'][-1]
       return {'loss': total_dataset_loss, 'status': STATUS_OK}
     return run_model_fn
     

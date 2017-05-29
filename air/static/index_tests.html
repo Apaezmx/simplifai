@@ -169,19 +169,21 @@ function startTraining() {
 
  
 var chart;
+var dimensionsX = 0;
+var dimensionsY = 0;
 function generateChart(lossData, valLossData) {
     
     if ( $('#graphs').children().length == 0 ) {
-        alert('it is empty!');
         chart = c3.generate({
             bindto: '#graphs',
             size: {
-                height: $(window).height()
+                height: $(window).height(),
+                width: $(window).width()
             },
             data: {
                 columns: [
-                    lossData,
-                    valLossData
+                    [lossData[0]],
+                    [valLossData[0]]
                 ]
             },
             tooltip: {
@@ -207,30 +209,74 @@ function generateChart(lossData, valLossData) {
                         text: 'Number of iterations',
                         position: 'inner-center'
                     },
-                    max: 18
+                    max: Math.round(Number(dimensionsX / (drawnData.length*2))),
                 },
                 y: {
                     label: {
                         text: 'Average loss',
                         position: 'outer-middle'
-                    }
+                    },
+                    max: dimensionsY / dimensionsX + 0.2,
                 }
             }
         });
-        chart.focus(lossData[0], valLossData[0]);
+        addPoints(lossData, valLossData);
     } else {
-        chart.load({
-            columns: [
-                lossData,
-                valLossData
-            ]
+        addPoints(lossData, valLossData);
+        chart.axis.max({
+            x:Math.round(Number(dimensionsX / (drawnData.length*2))),
+            y:dimensionsY / dimensionsX + 0.2
         });
     }
     
 }
     
+function addPoints(data1, data2) {
+    var newData1 = [data1[0]];
+    var newData2 = [data2[0]];
+    var i = 1;
+    var interval = setInterval(function() {
+        if ( data1[i] !== undefined && data1[i] !== null) {
+            newData1.push(data1[i]);
+        } else {
+            newData1.push(0);
+        }
+        if ( data2[i] !== undefined && data2[i] !== null) {
+            newData2.push(data2[i]);
+        } else {
+            newData2.push(0);
+        }
+        chart.load({
+            columns: [
+                newData1,
+                newData2
+            ]
+        });
+        chart.defocus([data1[0], data2[0]]);
+        i++;
+    
+        if (i == data1.length) {
+            clearInterval(interval);
+            chart.focus([data1[0], data2[0]]);
+        }
+    }, 250);
+}
+    
 var dataToAnimate = [];
-
+function hideData() {
+    var dataToHide = []
+    while (dataToAnimate.length > 20) {
+        dataToHide.push(dataToAnimate.shift());
+    }
+    var interval = setInterval(function() {
+        if (dataToHide.length != 0) {
+            chart.hide(dataToHide.shift());
+        } else {
+            clearInterval(interval);
+        }
+    }, 250);
+    
+}
     
 function generateName(key) {
     var width = key.substring(key.lastIndexOf('width')+8, key.lastIndexOf(", 'a"));
@@ -259,14 +305,23 @@ function createGraphs(response) {
           if (valLoss != undefined) {
             v = valLoss[j]
           }
+            
           dataLoss.push(l);
           dataValLoss.push(v);
+            
+          dimensionsY += (l+v);
         }
 
+        dimensionsX += ((j-2)*2);
+        
         drawnData.push(key);
         dataToAnimate.push(name+"l", name+"v");
         
         generateChart(dataLoss, dataValLoss);
+        
+        if (dataToAnimate.length >= 20 ) {
+            hideData();
+        }
     }
   }
   
@@ -287,6 +342,7 @@ function doPoll(handle){
               setTimeout(function(){doPoll(handle)},10000);
             } else {
               alert('Training done!');
+              chart.focus();
             }
     });
 }

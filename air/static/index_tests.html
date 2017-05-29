@@ -13,11 +13,14 @@
     <link href="css/custom.css" rel="stylesheet">
     
     <!-- Load c3.css -->
-    <link href="/path/to/c3.css" rel="stylesheet" type="text/css">
+    <link href="css/c3.css" rel="stylesheet" type="text/css">
       
     <!-- D3.js and C3.js -->
     <script src="https://d3js.org/d3.v3.min.js"></script>
-    <script src="/path/to/c3.min.js"></script>
+    <script src="js/c3.min.js"></script>
+      
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -28,7 +31,7 @@
   </head>
   <body>
       
-      <nav class="navbar navbar-default navbar-fixed-top">
+      <nav class="navbar navbar-default">
           <div class="container-fluid">
             <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header">
@@ -71,14 +74,25 @@
                 </div>
                 
                 <div class="input-group">
-                    <button type="submit" value="Start upload" class="btn btn-primary">Start upload</button>
+                    <button type="submit" value="Start upload" class="btn btn-primary btn-lg" id="load" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Uploading" >Start upload</button>
                 </div>
+           
+                
                 <input type="text" name="endpoint" value="upload_csv" hidden/>
+                
             </form>
             
-            <p id="f1_upload_process">Loading...<br/><img src="loader.gif" /></p><br/>
+            <br/><br/>
+            <div class="alert alert-success" role="alert">
+                <p id="result">Your file was uploaded successfully!</p>
+            </div>
             
-            <p id="result"></p>
+            <!--
+            <p id="f1_upload_process">Loading...<br/><img src="loader.gif" /></p><br/>
+            -->
+            
+            
+            
         </div>
     </div><!-- jumbotron -->
                   
@@ -89,14 +103,22 @@
     
     
 
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="js/bootstrap.min.js"></script>
   </body>
 </html>
 
-<script>
+<script type="text/javascript">
+    
+$('.btn').on('click', function() {
+    var $this = $(this);
+    $this.button('loading');
+    setTimeout(function() {
+        $this.button('reset');
+    }, 1000);
+});
+
 var model = "";
 $('#uploader').submit(function(e) {
     startUpload();
@@ -114,14 +136,16 @@ $('#uploader').submit(function(e) {
                 JSON.parse(response);
             } catch (e) {
                 alert(response);
-                document.getElementById('f1_upload_process').style.visibility = 'hidden';
+               /* document.getElementById('f1_upload_process').style.visibility = 'hidden';
+               */
                 return;
             }
             stopUpload(JSON.parse(response));
         },
         error : function(response) {
             alert(response);
-            document.getElementById('f1_upload_process').style.visibility = 'hidden';
+           /* document.getElementById('f1_upload_process').style.visibility = 'hidden';
+           */
         }
     });
 });
@@ -142,113 +166,138 @@ function startTraining() {
   );
   doPoll(model);
 }
-    
-var chart;
-function generateChart() ({
-    chart = c3.generate({
-    bindto: '#graphs'
-    });
-})
 
+ 
+var chart;
+function generateChart(lossData, valLossData) {
+    
+    if ( $('#graphs').children().length == 0 ) {
+        alert('it is empty!');
+        chart = c3.generate({
+            bindto: '#graphs',
+            size: {
+                height: $(window).height()
+            },
+            data: {
+                columns: [
+                    lossData,
+                    valLossData
+                ]
+            },
+            tooltip: {
+                grouped: false,
+                format: {
+                    title: function(x) { return x + "th Iteration"}
+                }
+            },
+            color: {
+                pattern: ['#dc2c6a', '#bd3364', '#fb6b32', '#d7673b', '#22ac71', '#289466',
+                          '#89e22d', '#7cc235', '#7a364e', '#5a2e3d', '#8c543d', '#664335',
+                          '#2a6049', '#244637', '#5b7e37', '#465c2f']
+            },
+            legend: {
+                show: false
+            },
+            transition: {
+                duration: 1000
+            },
+            axis: {
+                x: {
+                    label: {
+                        text: 'Number of iterations',
+                        position: 'inner-center'
+                    },
+                    max: 18
+                },
+                y: {
+                    label: {
+                        text: 'Average loss',
+                        position: 'outer-middle'
+                    }
+                }
+            }
+        });
+    } else {
+        chart.load({
+            columns: [
+                lossData,
+                valLossData
+            ]
+        });
+    }
+    
+}
+    
+var dataToAnimate = [];
+function graphAnimation() {
+    
+    while ( dataToAnimate.length != 0 ) {
+        setTimeout(function() {
+            var data1 = dataToAnimate.pop();
+            var data2 = dataToAnimate.pop();
+            chart.focus([data1, data2]);
+        }, 5000);
+        setTimeout(function() {
+            var data3 = dataToAnimate.shift();
+            var data4 = dataToAnimate.shift();
+            chart.hide([data3, data4]);
+        }, 7500);
+    }
+        
+}
+    
+function generateName(key) {
+    var width = key.substring(key.lastIndexOf('width')+8, key.lastIndexOf(", 'a"));
+    var activation = key.substring(key.lastIndexOf('activation')+14, key.lastIndexOf("', 'o"));
+    var optimizer = key.substring(key.lastIndexOf('optimizer')+13, key.lastIndexOf("', 'd"));
+    var depth = key.substring(key.lastIndexOf('depth')+8);
+    return activation.slice(0, 3)+width+"-"+optimizer.slice(0, 3)+depth;
+}
+
+var drawnData = []
 function createGraphs(response) {
   for (var key in response['val_losses']) {
-    var valLoss = response["val_losses"][key]["val_loss"];
-    var loss = response["val_losses"][key]["loss"];
-    var data = [];
-    var j = 0;
-    for (; j < valLoss.length; j++) {
-      l = 0
-      v = 0
-      if (loss != undefined) {
-        l = loss[j]
-      }
-      if (valLoss != undefined) {
-        v = valLoss[j]
-      }
-      data.push({'loss': l, 'valLoss': v, 'x':j})
+    if ( $.inArray(key, drawnData) == -1 ) {
+        var valLoss = response["val_losses"][key]["val_loss"];
+        var loss = response["val_losses"][key]["loss"];
+        var name = generateName(key);
+        var dataLoss = [name+"l"];
+        var dataValLoss = [name+"v"];
+        var j = 0;
+        for (; j < valLoss.length; j++) {
+          l = 0
+          v = 0
+          if (loss != undefined) {
+            l = loss[j]
+          }
+          if (valLoss != undefined) {
+            v = valLoss[j]
+          }
+          dataLoss.push(l);
+          dataValLoss.push(v);
+        }
+
+        drawnData.push(key);
+        dataToAnimate.push(name+"l", name+"v");
+        
+        generateChart(dataLoss, dataValLoss);
     }
-      
-    alert(data[0]['loss']);
-    
-    /*
-    margin = {top: 40, right: 20, bottom: 40, left: 90},
-    width = 500 - margin.left - margin.right,
-    height = 300 - margin.top - margin.bottom;
-    
-    var svg = d3.select("#graphs").append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .attr("id", "svg" + key)
-      .append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-
-    var x = d3.scaleLinear()
-        .rangeRound([0, width]);
-
-    var y = d3.scaleLinear()
-        .rangeRound([height, 0]);
-
-    var lossLine = d3.line()
-        .x(function(d) {return x(d.x);})
-        .y(function(d) {return y(d.loss);});
-    var valLossLine = d3.line()
-        .x(function(d) {return x(d.x);})
-        .y(function(d) {return y(d.valLoss);});
-
-    x.domain(d3.extent(data, function(d) { return d.x; }));
-    y.domain([0, Math.max(1, 
-	    d3.max(data, function(d) { return Math.max(d.loss, d.valLoss); }))]);
-
-    svg.append("g")
-        .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x));
-
-    svg.append("g")
-        .call(d3.axisLeft(y))
-
-    svg.append("path")
-        .data([data])
-        .attr("fill", "none")
-        .attr("stroke", "red")
-        .attr("stroke-linejoin", "round")
-        .attr("stroke-linecap", "round")
-        .attr("stroke-width", 1.5)
-        .attr("d", lossLine);
-        
-    svg.append("path")
-        .data([data])
-        .attr("fill", "none")
-        .attr("stroke", "steelblue")
-        .attr("stroke-linejoin", "round")
-        .attr("stroke-linecap", "round")
-        .attr("stroke-width", 1.5)
-        .attr("d", valLossLine);
-        
-    svg.append("text")
-        .attr("x", (width / 2))             
-        .attr("y", 0 - (margin.top / 2))
-        .attr("text-anchor", "middle")  
-        .style("font-size", "16px") 
-        .text("Model " + key);
-  */
   }
   
 }
+    
 function updateGraphs(response) {
-   $('#graphs').empty();
-   /*
-   generateChart();
-   */
-   createGraphs(response);
+    createGraphs(response);
 }
+    
 function doPoll(handle){
     $.post('/api', 
            {'endpoint': 'train_status',
             'handle': handle},
            function(data) {
             data = JSON.parse(data);
-            updateGraphs(data);
             if (data['status'] != 'DONE') {
+              updateGraphs(data);
               setTimeout(function(){doPoll(handle)},10000);
             } else {
               alert('Training done!');
@@ -258,9 +307,12 @@ function doPoll(handle){
 
 
 function startUpload() {
-    document.getElementById('f1_upload_process').style.visibility = 'visible';
+    
+   /* document.getElementById('f1_upload_process').style.visibility = 'visible';
+   */
     return true;
 }
+    
 function stopUpload(response){
       var result = '';
       if (response['status'] == 'OK'){
@@ -289,7 +341,9 @@ function stopUpload(response){
          document.getElementById('result').innerHTML = 
            '<span class="emsg">There was an error during file upload!<\/span><br/><br/>';
       }
-      document.getElementById('f1_upload_process').style.visibility = 'hidden';
+     /* document.getElementById('f1_upload_process').style.visibility = 'hidden';
+     */
       return true;   
 }
+    
 </script> 

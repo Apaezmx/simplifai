@@ -217,6 +217,7 @@ function generateChart(lossData, valLossData) {
                 }
             }
         });
+        chart.focus(lossData[0], valLossData[0]);
     } else {
         chart.load({
             columns: [
@@ -229,22 +230,7 @@ function generateChart(lossData, valLossData) {
 }
     
 var dataToAnimate = [];
-function graphAnimation() {
-    
-    while ( dataToAnimate.length != 0 ) {
-        setTimeout(function() {
-            var data1 = dataToAnimate.pop();
-            var data2 = dataToAnimate.pop();
-            chart.focus([data1, data2]);
-        }, 5000);
-        setTimeout(function() {
-            var data3 = dataToAnimate.shift();
-            var data4 = dataToAnimate.shift();
-            chart.hide([data3, data4]);
-        }, 7500);
-    }
-        
-}
+
     
 function generateName(key) {
     var width = key.substring(key.lastIndexOf('width')+8, key.lastIndexOf(", 'a"));

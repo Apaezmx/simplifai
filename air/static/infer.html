@@ -9,10 +9,9 @@
 
     <!-- Bootstrap and custom CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/normalize.css" rel="stylesheet">
     <link href="css/custom.css" rel="stylesheet">
-    
-    <!-- D3.js -->
-    <script src="https://d3js.org/d3.v4.min.js"></script>
+
 
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -22,24 +21,108 @@
     <![endif]-->
   </head>
   <body>
-    <h1>IA!</h1>
-    
-    <p>Infer which model?</p>
+      
+    <nav class="navbar navbar-default">
+          <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="#">Minatini</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav navbar-right">
+                <li><a href="#">About</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Services<span class="caret"></span></a>
+                  <ul class="dropdown-menu">
+                    <li><a href="index.html">Train a model</a></li>
+                    <li><a href="infer.html">Make predictions</a></li>
+                  </ul>
+                </li>
+                <li><a href="#">Contact</a></li>
+              </ul>
+            </div><!-- /.navbar-collapse -->
+          </div><!-- /.container-fluid -->
+        </nav>
+      
+    <div class="jumbotron" id="infer-jumbotron">
+        <div class="container">
+        
+            <h1>Make some predictions!</h1>
+            <br/><br/>
+
+            <!--
+            <p>Infer which model?</p>
+            -->
+            
+            <div class="container pseudo-form" id="container-retriever">
+            
+                <div class="form-group has-success">
+
+                    <input type="text" class="form-control form-control-success" id='text_model' value="" style="text-align:center;"/>
+                    <div class="form-control feedback" id="uploadedSuccessfully">Enter the model to infer and retrieve it!</div>
+
+                </div>  
+
+                <div class="input-group">
+
+                    <input type="submit" class="btn btn-primary btn-lg" id='btn_infer_types' value="Retrieve Model" onclick="infer_types();changeVisibility();">
+
+                </div>
+
+            </div><!-- pseudo-form -->
+            
+            <div class="container pseudo-form" id="container-predictions" hidden>
+            
+                <table id="values"></table>
+                <input type="submit" id='btn_infer' value="Submit" onclick="infer();" hidden/>
+                <div id="results"></div>
+            
+            </div>
+            
+            
+    <!--
     <input type="text" id='text_model' value="" />
-    <input type="submit" id='btn_infer_types' value="Retrieve Model" onclick="infer_types();" />
-    <table id="values"></table>
-    <input type="submit" id='btn_infer' value="Submit" onclick="infer();" hidden/>
-    <div id="results"></div>
     
+            
+    <input type="submit" id='btn_infer_types' value="Retrieve Model" onclick="infer_types();" />
+-->
+            
+        </div>
+        
+    </div><!-- .jumbotron -->
+    
+      
+    <footer class="footer">
+    
+        <div class="container"></div>
+        
+    </footer>
     
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="js/bootstrap.min.js"></script>
+      
   </body>
 </html>
 <script>
+
+function changeVisibility() {
+    $('#container-predictions').show();
+    $('html, body').animate({
+        scrollTop: $("#infer-jumbotron").offset().top
+    }, 500);
+}
+
 function infer_types() {
   $.post('/api',
         {'endpoint': 'infer_types',
@@ -52,9 +135,9 @@ function infer_types() {
           var types = response['types'];
           var table = $('#values');
           table.empty();
-          var th = document.createElement('th');
-          var td1 = document.createElement('td');
-          var td2 = document.createElement('td');
+          var th = document.createElement('tr');
+          var td1 = document.createElement('th');
+          var td2 = document.createElement('th');
           
           td1.innerHTML = "Feature";
           td2.innerHTML = "Value";
@@ -103,4 +186,3 @@ function infer() {
   );
 }
 </script> 
-

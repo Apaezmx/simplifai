@@ -144,6 +144,6 @@ def load_csvs(file_list):
     return data, types, norms
 
 def random_hex():
-  ran = random.randrange(10**80)
-  return "%064x" % ran
+  ran = random.randrange(16**10)
+  return "%010x" % ran
 

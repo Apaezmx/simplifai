@@ -7,11 +7,19 @@ def info(title):
     print 'module name: ' +  __name__
     print 'parent process: ' + str(os.getppid())
     print 'process id: ' + str(os.getpid())
-    
+
+def neuron_choice(numc, numl, numn):
+  neurons = []
+  for i in range(numn):
+    # For each neuron choose activation.
+    neurons.append(hp.choice('c'+str(numc)+'l'+str(numl)+'n'+str(numn)+'nn'+str(i), ['relu', 'sigmoid', 'tanh', 'linear']))
+  return neurons
+
 def layer_choice(num):
   layer_neurons = []
   for i in range(num):
-    layer_neurons.append(hp.choice('c'+str(num)+'l'+str(i),range(1, 10)))
+    # Choose number of neurons from 1 - 10.
+    layer_neurons.append(hp.choice('neurons, c'+str(num)+'l'+str(i), [('c'+str(num)+'l'+str(i), neuron_choice(num, i, x)) for x in range(1,11)]))
   return layer_neurons
 
 def train(handle, train_epochs=50):
@@ -24,8 +32,7 @@ def train(handle, train_epochs=50):
   
   fspace = {
     'optimizer': hp.choice('optimzer', ['rmsprop', 'adagrad']),
-    'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh']),
-    'layers': hp.choice('layers', [(str(x), layer_choice(x)) for x in range(10)])
+    'layers': hp.choice('layers', [(str(x), layer_choice(x)) for x in range(10)])  # Choose from 0 to 9 layers.
   }
 
   trials = Trials()

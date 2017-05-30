@@ -1,5 +1,6 @@
 import json
 import numpy as np
+from custom_dense import CustomDense
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 from keras.callbacks import ModelCheckpoint
 from keras.models import Sequential
@@ -153,7 +154,6 @@ class Model():
       # We will build in total DEEP_RANGE*WIDE_RANGE models.
       optimizer = hp['optimizer']
       layers = hp['layers']
-      activation = hp['activation']
       dropout = 0.2  # hp['dropout']
       batch_size = 128  # hp['batch_size']
       
@@ -162,18 +162,17 @@ class Model():
       # We will add 'depth' layers with 'net_width' neurons.
       depth = len(layers[1])
       for i in range(depth):
-        width = layers[1][i]
-        net_width = input_size * width
+        activations = layers[1][i][1]
         if i == 0 and depth != 1:
-          model.add(Dense(net_width, input_shape=(input_size,)))
-          model.add(Activation(activation))
+          print 'Input: ' + str(input_size) + ', ' + str(len(activations))
+          model.add(CustomDense(activations, input_shape=(input_size,)))
           model.add(Dropout(dropout))
         elif i == depth - 1:
-          model.add(Dense(len(output_headers), input_shape=(net_width,)))
-          model.add(Activation(activation))
+          print 'Input: ' + str(len(layers[1][i-1][1])) + ', ' + str(len(output_headers)) 
+          model.add(Dense(len(output_headers), input_shape=(len(layers[1][i-1][1]),)))
         else:
-          model.add(Dense(net_width, input_shape=(net_width,)))
-          model.add(Activation(activation))
+          print 'Input: ' + str(len(layers[1][i-1][1])) + ', ' + str(len(activations))
+          model.add(CustomDense(activations, input_shape=(len(layers[1][i-1][1]),)))
           model.add(Dropout(dropout))
 
       # No Activation in the end for now... Assuming regression always.

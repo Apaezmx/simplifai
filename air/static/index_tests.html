@@ -70,11 +70,12 @@
             <form action="/api" id="uploader" method="post" enctype="multipart/form-data">
                 <div class="form-group has-success">
                         <input type="file" name="upload" class="form-control form-control-success" id="inputSuccess"/>
-                        <div class="form-control feedback">Success! You've done it.</div>
+                        <div class="form-control feedback" id="uploadedSuccessfully">Choose a file and click "Start upload"</div>
                 </div>
                 
                 <div class="input-group">
                     <button type="submit" value="Start upload" class="btn btn-primary btn-lg" id="load" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Uploading" >Start upload</button>
+                    <button type="submit" id='btn_train' value="Start Training" class="btn btn-primary btn-lg" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Training" onclick="startTraining();">Start Training</button>
                 </div>
            
                 
@@ -82,12 +83,13 @@
                 
             </form>
             
-            <br/><br/>
+            <!--
+            <br/>
             <div class="alert alert-success" role="alert">
-                <p id="result">Your file was uploaded successfully!</p>
+                <p id="result"></p>
             </div>
             
-            <!--
+            
             <p id="f1_upload_process">Loading...<br/><img src="loader.gif" /></p><br/>
             -->
             
@@ -95,9 +97,12 @@
             
         </div>
     </div><!-- jumbotron -->
-                  
+       
+    <!--
     <div id="types"></div>
+    
     <input type="submit" id='btn_train' value="Start Training" onclick="startTraining();" hidden />
+    -->
     <div id="graphs">
     </div>
     
@@ -111,12 +116,20 @@
 
 <script type="text/javascript">
     
-$('.btn').on('click', function() {
+$('#load').on('click', function() {
     var $this = $(this);
     $this.button('loading');
     setTimeout(function() {
         $this.button('reset');
-    }, 1000);
+    }, 500);
+});
+    
+$('#btn_train').on('click', function() {
+    var $this = $(this);
+    $this.button('loading');
+    setTimeout(function() {
+        $this.button('reset');
+    }, 10000);
 });
 
 var model = "";
@@ -221,6 +234,7 @@ function generateChart(lossData, valLossData) {
             }
         });
         addPoints(lossData, valLossData);
+        goToGraph();
     } else {
         addPoints(lossData, valLossData);
         chart.axis.max({
@@ -229,6 +243,12 @@ function generateChart(lossData, valLossData) {
         });
     }
     
+}
+    
+function goToGraph() {
+    $('html, body').animate({
+        scrollTop: $("#graphs").offset().top
+    }, 1000);
 }
     
 function addPoints(data1, data2) {
@@ -358,8 +378,8 @@ function startUpload() {
 function stopUpload(response){
       var result = '';
       if (response['status'] == 'OK'){
-         document.getElementById('result').innerHTML =
-           '<span class="msg">The file ' + response['handle'] + ' was uploaded successfully!<\/span><br/><br/>';
+      document.getElementById('uploadedSuccessfully').innerHTML =
+           'Your file was uploaded successfully! Start training!';
          table = document.createElement('table');
          headers = document.createElement('tr');
          row = document.createElement('tr');
@@ -374,8 +394,10 @@ function stopUpload(response){
          }
          table.append(headers);
          table.append(row);
+         /*
          $('#types').empty()
          $('#types').append(table);
+         */
          model = response['handle'];
          $('#btn_train').show();
       }

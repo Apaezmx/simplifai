@@ -12,8 +12,13 @@
     <link href="css/normalize.css" rel="stylesheet">
     <link href="css/custom.css" rel="stylesheet">
     
-    <!-- D3.js -->
-    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <!-- Load c3.css -->
+    <link href="css/c3.css" rel="stylesheet" type="text/css">
+      
+    <!-- D3.js and C3.js -->
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="js/c3.min.js"></script>
+      
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 
@@ -26,7 +31,7 @@
   </head>
   <body>
       
-      <nav class="navbar navbar-default navbar-fixed-top">
+      <nav class="navbar navbar-default">
           <div class="container-fluid">
             <!-- Brand and toggle get grouped for better mobile display -->
             <div class="navbar-header">
@@ -65,11 +70,12 @@
             <form action="/api" id="uploader" method="post" enctype="multipart/form-data">
                 <div class="form-group has-success">
                         <input type="file" name="upload" class="form-control form-control-success" id="inputSuccess"/>
-                        <div class="form-control feedback">Success! You've done it.</div>
+                        <div class="form-control feedback" id="uploadedSuccessfully">Choose a file and click "Start upload"</div>
                 </div>
                 
                 <div class="input-group">
-                    <button type="submit" value="Start upload" class="btn btn-primary btn-lg" id="load" data-loading-text="<i class='fa fa-circle-o-notch fa-spin'></i> Uploading" >Start upload</button>
+                    <button type="submit" value="Start upload" class="btn btn-primary btn-lg" id="load" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Uploading">Start upload</button>
+                    <button type="submit" value="Start Training" class="btn btn-primary btn-lg" id='btn_train' data-loading-text="<i class='fa fa-spinner fa-spin '></i> Please wait" onclick="startTraining();">Start Training</button>
                 </div>
            
                 
@@ -77,12 +83,13 @@
                 
             </form>
             
-            <br/><br/>
+            <!--
+            <br/>
             <div class="alert alert-success" role="alert">
-                <p id="result">Your file was uploaded successfully!</p>
+                <p id="result"></p>
             </div>
             
-            <!--
+            
             <p id="f1_upload_process">Loading...<br/><img src="loader.gif" /></p><br/>
             -->
             
@@ -90,11 +97,22 @@
             
         </div>
     </div><!-- jumbotron -->
-                  
-    <div id="types"></div>
-    <input type="submit" id='btn_train' value="Start Training" onclick="startTraining();" hidden />
+       
     <div id="graphs">
     </div>
+      
+    <footer class="footer">
+    
+        <div class="container"></div>
+        
+    </footer>
+      
+    <!--
+    <div id="types"></div>
+    
+    <input type="submit" id='btn_train' value="Start Training" onclick="startTraining();" hidden />
+    -->
+    
     
     
 
@@ -106,12 +124,20 @@
 
 <script type="text/javascript">
     
-$('.btn').on('click', function() {
+$('#load').on('click', function() {
     var $this = $(this);
     $this.button('loading');
     setTimeout(function() {
         $this.button('reset');
-    }, 1000);
+    }, 500);
+});
+    
+$('#btn_train').on('click', function() {
+    var $this = $(this);
+    $this.button('loading');
+    setTimeout(function() {
+        $this.button('reset');
+    }, 20000);
 });
 
 var model = "";
@@ -162,116 +188,177 @@ function startTraining() {
   doPoll(model);
 }
 
-function wrap(text, width) {
-  text.each(function() {
-    var text = d3.select(this),
-        words = text.text().split(/\s+/).reverse(),
-        word,
-        line = [],
-        lineNumber = 0,
-        lineHeight = 1.1, // ems
-        y = text.attr("y"),
-        dy = 0,
-        dx = Math.floor(width / 2),
-        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em").attr("dx", dx + "px");
-    while (word = words.pop()) {
-      line.push(word);
-      tspan.text(line.join(" "));
-      if (tspan.node().getComputedTextLength() > width) {
-        line.pop();
-        tspan.text(line.join(" "));
-        line = [word];
-        tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").attr("dx", dx + "px").text(word);
-      }
+ 
+var chart;
+var dimensionsX = 0;
+var dimensionsY = 0;
+function generateChart(lossData, valLossData) {
+    
+    if ( $('#graphs').children().length == 0 ) {
+        chart = c3.generate({
+            bindto: '#graphs',
+            size: {
+                height: $(window).height()-5,
+                width: $(window).width()-10
+            },
+            data: {
+                columns: [
+                    [lossData[0]],
+                    [valLossData[0]]
+                ]
+            },
+            tooltip: {
+                grouped: false,
+                format: {
+                    title: function(x) { return x + "th Iteration"}
+                }
+            },
+            color: {
+                pattern: ['#dc2c6a', '#bd3364', '#fb6b32', '#d7673b', '#22ac71', '#289466',
+                          '#89e22d', '#7cc235', '#7a364e', '#5a2e3d', '#8c543d', '#664335',
+                          '#2a6049', '#244637', '#5b7e37', '#465c2f']
+            },
+            legend: {
+                show: false
+            },
+            transition: {
+                duration: 1000
+            },
+            axis: {
+                x: {
+                    label: {
+                        text: 'Number of iterations',
+                        position: 'inner-right'
+                    },
+                    max: Math.round(Number(dimensionsX / (drawnData.length*2))),
+                },
+                y: {
+                    label: {
+                        text: 'Average loss',
+                        position: 'outer-middle'
+                    },
+                    max: dimensionsY / dimensionsX + 0.2,
+                }
+            }
+        });
+        addPoints(lossData, valLossData);
+        goToGraph();
+    } else {
+        addPoints(lossData, valLossData);
+        chart.axis.max({
+            x:Math.round(Number(dimensionsX / (drawnData.length*2))),
+            y:dimensionsY / dimensionsX + 0.2
+        });
     }
-  });
+    
+}
+    
+function goToGraph() {
+    $('html, body').animate({
+        scrollTop: $("#graphs").offset().top
+    }, 1000);
+}
+    
+function addPoints(data1, data2) {
+    var newData1 = [data1[0]];
+    var newData2 = [data2[0]];
+    var i = 1;
+    var interval = setInterval(function() {
+        if ( data1[i] !== undefined && data1[i] !== null) {
+            newData1.push(data1[i]);
+        } else {
+            newData1.push(0);
+        }
+        if ( data2[i] !== undefined && data2[i] !== null) {
+            newData2.push(data2[i]);
+        } else {
+            newData2.push(0);
+        }
+        chart.load({
+            columns: [
+                newData1,
+                newData2
+            ]
+        });
+        chart.defocus([data1[0], data2[0]]);
+        i++;
+    
+        if (i == data1.length) {
+            clearInterval(interval);
+            chart.focus([data1[0], data2[0]]);
+        }
+    }, 250);
+}
+    
+var dataToAnimate = [];
+function hideData() {
+    var dataToHide = []
+    while (dataToAnimate.length > 20) {
+        dataToHide.push(dataToAnimate.shift());
+    }
+    var interval = setInterval(function() {
+        if (dataToHide.length != 0) {
+            chart.hide(dataToHide.shift());
+        } else {
+            clearInterval(interval);
+        }
+    }, 250);
+    
+}
+    
+function generateName(key) {
+    var width = key.substring(key.lastIndexOf('width')+8, key.lastIndexOf(", 'a"));
+    var activation = key.substring(key.lastIndexOf('activation')+14, key.lastIndexOf("', 'o"));
+    var optimizer = key.substring(key.lastIndexOf('optimizer')+13, key.lastIndexOf("', 'd"));
+    var depth = key.substring(key.lastIndexOf('depth')+8);
+    return activation.slice(0, 3)+width+"-"+optimizer.slice(0, 3)+depth;
 }
 
+var drawnData = []
 function createGraphs(response) {
   for (var key in response['val_losses']) {
-    var valLoss = response["val_losses"][key]["val_loss"];
-    var loss = response["val_losses"][key]["loss"];
-    var data = [];
-    var j = 0;
-    for (; j < valLoss.length; j++) {
-      l = 0
-      v = 0
-      if (loss != undefined) {
-        l = loss[j]
-      }
-      if (valLoss != undefined) {
-        v = valLoss[j]
-      }
-      data.push({'loss': l, 'valLoss': v, 'x':j})
-    }
-    
-    margin = {top: 80, right: 20, bottom: 40, left: 90},
-    width = 500 - margin.left - margin.right,
-    height = 300 - margin.top - margin.bottom;
-    
-    var svg = d3.select("#graphs").append("svg")
-      .attr("width", width + margin.left + margin.right)
-      .attr("height", height + margin.top + margin.bottom)
-      .attr("id", "svg" + key)
-      .append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    if ( $.inArray(key, drawnData) == -1 ) {
+        var valLoss = response["val_losses"][key]["val_loss"];
+        var loss = response["val_losses"][key]["loss"];
+        var name = generateName(key);
+        var dataLoss = [name+"l"];
+        var dataValLoss = [name+"v"];
+        var j = 0;
+        for (; j < valLoss.length; j++) {
+          l = 0
+          v = 0
+          if (loss != undefined) {
+            l = loss[j]
+          }
+          if (valLoss != undefined) {
+            v = valLoss[j]
+          }
+            
+          dataLoss.push(l);
+          dataValLoss.push(v);
+            
+          dimensionsY += (l+v);
+        }
 
-
-    var x = d3.scaleLinear()
-        .rangeRound([0, width]);
-
-    var y = d3.scaleLinear()
-        .rangeRound([height, 0]);
-
-    var lossLine = d3.line()
-        .x(function(d) {return x(d.x);})
-        .y(function(d) {return y(d.loss);});
-    var valLossLine = d3.line()
-        .x(function(d) {return x(d.x);})
-        .y(function(d) {return y(d.valLoss);});
-
-    x.domain(d3.extent(data, function(d) { return d.x; }));
-    y.domain([0, Math.max(1, 
-	    d3.max(data, function(d) { return Math.max(d.loss, d.valLoss); }))]);
-
-    svg.append("g")
-        .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x));
-
-    svg.append("g")
-        .call(d3.axisLeft(y))
-
-    svg.append("path")
-        .data([data])
-        .attr("fill", "none")
-        .attr("stroke", "red")
-        .attr("stroke-linejoin", "round")
-        .attr("stroke-linecap", "round")
-        .attr("stroke-width", 1.5)
-        .attr("d", lossLine);
+        dimensionsX += ((j-2)*2);
         
-    svg.append("path")
-        .data([data])
-        .attr("fill", "none")
-        .attr("stroke", "steelblue")
-        .attr("stroke-linejoin", "round")
-        .attr("stroke-linecap", "round")
-        .attr("stroke-width", 1.5)
-        .attr("d", valLossLine);
-
-    svg.append("text")
-        .attr("x", (width / 2))             
-        .attr("y", 0 - (margin.top / 2))
-        .attr("text-anchor", "middle")  
-        .style("font-size", "16px") 
-        .text(key)
-        .call(wrap, width);
+        drawnData.push(key);
+        dataToAnimate.push(name+"l", name+"v");
+        
+        generateChart(dataLoss, dataValLoss);
+        
+        if (dataToAnimate.length >= 20 ) {
+            hideData();
+        }
+    }
   }
   
 }
+    
 function updateGraphs(response) {
-   $('#graphs').empty();
-   createGraphs(response);
+    createGraphs(response);
 }
+    
 function doPoll(handle){
     $.post('/api', 
            {'endpoint': 'train_status',
@@ -283,6 +370,7 @@ function doPoll(handle){
               setTimeout(function(){doPoll(handle)},10000);
             } else {
               alert('Training done!');
+              chart.focus();
             }
     });
 }
@@ -294,11 +382,12 @@ function startUpload() {
    */
     return true;
 }
+    
 function stopUpload(response){
       var result = '';
       if (response['status'] == 'OK'){
-         document.getElementById('result').innerHTML =
-           '<span class="msg">The file ' + response['handle'] + ' was uploaded successfully!<\/span><br/><br/>';
+      document.getElementById('uploadedSuccessfully').innerHTML =
+           'Your file was uploaded successfully! Start training!';
          table = document.createElement('table');
          headers = document.createElement('tr');
          row = document.createElement('tr');
@@ -313,8 +402,10 @@ function stopUpload(response){
          }
          table.append(headers);
          table.append(row);
+         /*
          $('#types').empty()
          $('#types').append(table);
+         */
          model = response['handle'];
          $('#btn_train').show();
       }
@@ -326,4 +417,5 @@ function stopUpload(response){
      */
       return true;   
 }
+    
 </script> 

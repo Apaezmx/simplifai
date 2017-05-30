@@ -9,30 +9,45 @@ body {
     margin:0;
     padding:0;
     background-color: #16212f;
-    border: None;
     height: 60px;
+    border-color: #6A4E7D;
+    border-width: 0 0 3px 0;
 }
+
 .navbar-default .navbar-header a {
     color: whitesmoke;
     padding-left: 50px;
     padding-top: 20px;
+    font-size: 20px;
 }
 .navbar-default #bs-example-navbar-collapse-1 .navbar-right {
     padding-right: 50px;
     padding-top: 5px;
+}
+.navbar-default #bs-example-navbar-collapse-1 .navbar-right a:hover {
+    color: #F286BD;
+}
+.navbar-default #bs-example-navbar-collapse-1 .navbar-right a:visited {
+    color: #B46990;
+}
+.navbar-default #bs-example-navbar-collapse-1 .navbar-right a:active {
+    color: #F286BD;
 }
 
 .jumbotron {
     text-align: center;
     text-decoration-style: dashed;
     background-image: url(../images/uk-population-density-map5.png);
-    border: 5px solid black;
+    border: solid black;
+    border-width: 0 2px 2px 2px;
     height: 100vh;
 }
-.jumbotron h1 {
+
+.jumbotron .container h1 {
+    text-shadow: -2px 0 white, 0 2px white, 2px 0 white, 0 -2px white;
     padding-top: 50px;
 }
-.jumbotron form{
+.jumbotron form {
     text-align:right;
     width:390px;
     margin:0 auto;
@@ -40,11 +55,19 @@ body {
     background-color:#fff;
     border:3px solid black;
 }
-.jumbotron .container h1 {
-    text-shadow: -1px 0 white, 0 1px white, 1px 0 white, 0 -1px white;
+.jumbotron form .form-group #uploadedSuccessfully {
+    text-align: center;
 }
-.jumbotron form .input-group input {
+.jumbotron form .input-group {
     font-size: 15px;
+}
+.jumbotron form .input-group #load {
+    margin-left: 35px;
+    background-color: #814F7C;
+}
+.jumbotron form .input-group #btn_train {
+    margin-left: 30px;
+    background-color: #814F7C;
 }
 
 #f1_upload_process{

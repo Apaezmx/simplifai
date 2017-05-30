@@ -75,7 +75,7 @@
                 
                 <div class="input-group">
                     <button type="submit" value="Start upload" class="btn btn-primary btn-lg" id="load" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Uploading">Start upload</button>
-                    <button type="submit" value="Start Training" class="btn btn-primary btn-lg" id='btn_train' data-loading-text="<i class='fa fa-spinner fa-spin '></i> Please wait." onclick="startTraining();">Start Training</button>
+                    <button type="submit" value="Start Training" class="btn btn-primary btn-lg" id='btn_train' data-loading-text="<i class='fa fa-spinner fa-spin '></i> Please wait" onclick="startTraining();">Start Training</button>
                 </div>
            
                 
@@ -98,13 +98,21 @@
         </div>
     </div><!-- jumbotron -->
        
+    <div id="graphs">
+    </div>
+      
+    <footer class="footer">
+    
+        <div class="container"></div>
+        
+    </footer>
+      
     <!--
     <div id="types"></div>
     
     <input type="submit" id='btn_train' value="Start Training" onclick="startTraining();" hidden />
     -->
-    <div id="graphs">
-    </div>
+    
     
     
 
@@ -129,7 +137,7 @@ $('#btn_train').on('click', function() {
     $this.button('loading');
     setTimeout(function() {
         $this.button('reset');
-    }, 10000);
+    }, 20000);
 });
 
 var model = "";
@@ -190,8 +198,8 @@ function generateChart(lossData, valLossData) {
         chart = c3.generate({
             bindto: '#graphs',
             size: {
-                height: $(window).height(),
-                width: $(window).width()
+                height: $(window).height()-5,
+                width: $(window).width()-10
             },
             data: {
                 columns: [
@@ -220,7 +228,7 @@ function generateChart(lossData, valLossData) {
                 x: {
                     label: {
                         text: 'Number of iterations',
-                        position: 'inner-center'
+                        position: 'inner-right'
                     },
                     max: Math.round(Number(dimensionsX / (drawnData.length*2))),
                 },

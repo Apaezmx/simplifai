@@ -39,8 +39,9 @@ body {
     text-decoration-style: dashed;
     background-image: url(../images/uk-population-density-map5.png);
     border: solid black;
-    border-width: 0 2px 2px 2px;
+    border-width: 0 2px 4px 2px;
     height: 100vh;
+    margin: 0;
 }
 
 .jumbotron .container h1 {
@@ -68,6 +69,33 @@ body {
 .jumbotron form .input-group #btn_train {
     margin-left: 30px;
     background-color: #814F7C;
+}
+
+#graphs {
+    margin: 0;
+    background-image: url(../images/uk-population-density-map11.png);
+    align-content: center;
+    border: solid black;
+    border-width: 0 4px 0 4px;
+}
+.c3-lines {
+    stroke-width: 3px;
+}
+.c3-axis {
+    width: 3px;
+}
+.c3-axis-x-label {
+    font-size: 12px;
+}
+.c3-axis-y-label {
+    font-size: 12px;
+}
+
+.footer {
+    height: 60px;
+    background-color: #16212f;
+    border-color: #6A4E7D;
+    border-width: 3px 0 3px 0;
 }
 
 #f1_upload_process{

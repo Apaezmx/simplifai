@@ -7,6 +7,12 @@ def info(title):
     print 'module name: ' +  __name__
     print 'parent process: ' + str(os.getppid())
     print 'process id: ' + str(os.getpid())
+    
+def layer_choice(num):
+  layer_neurons = []
+  for i in range(num):
+    layer_neurons.append(hp.choice('c'+str(num)+'l'+str(i),range(1, 10)))
+  return layer_neurons
 
 def train(handle, train_epochs=50):
   from db import load_keras_models, get_model, save_model
@@ -18,9 +24,8 @@ def train(handle, train_epochs=50):
   
   fspace = {
     'optimizer': hp.choice('optimzer', ['rmsprop', 'adagrad']),
-    'width': hp.choice('width', range(1,10)),
-    'depth': hp.choice('depth', range(1,10)),
-    'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh'])
+    'activation': hp.choice('activation', ['relu', 'sigmoid', 'tanh']),
+    'layers': hp.choice('layers', [(str(x), layer_choice(x)) for x in range(10)])
   }
 
   trials = Trials()

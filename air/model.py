@@ -152,17 +152,18 @@ class Model():
       
       # We will build in total DEEP_RANGE*WIDE_RANGE models.
       optimizer = hp['optimizer']
-      width = hp['width']
-      depth = hp['depth']
+      layers = hp['layers']
       activation = hp['activation']
       dropout = 0.2  # hp['dropout']
       batch_size = 128  # hp['batch_size']
       
       model, input_size = init_model(self)
-      net_width = input_size * width
       
       # We will add 'depth' layers with 'net_width' neurons.
+      depth = len(layers[1])
       for i in range(depth):
+        width = layers[1][i]
+        net_width = input_size * width
         if i == 0 and depth != 1:
           model.add(Dense(net_width, input_shape=(input_size,)))
           model.add(Activation(activation))
@@ -189,6 +190,7 @@ class Model():
       history = model.fit(X_train, Y_train, 
                           batch_size=batch_size, 
                           nb_epoch=nb_epoch,
+                          shuffle=True,
                           validation_split=VAL_SPLIT)
       if persist:
         # Save the model for inference purposes.

@@ -1,7 +1,9 @@
 from keras import backend as K
 from keras.engine.topology import Layer
 import numpy as np
+import tensorflow as tf
 
+# Only availble with tf.
 class CustomDense(Layer):
 
   def __init__(self, activations, **kwargs):
@@ -31,7 +33,7 @@ class CustomDense(Layer):
     to_stack = []
 
     for i, activation in enumerate(self.activations):
-      to_stack.append(K.flatten(self.activate(activation, K.slice(res, [0, i], [-1, 1]))))
+      to_stack.append(K.flatten(self.activate(activation, tf.slice(res, [0, i], [-1, 1]))))
     return K.transpose(K.stack(to_stack))
 
   def get_output_shape_for(self, input_shape):

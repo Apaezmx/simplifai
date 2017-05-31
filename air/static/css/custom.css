@@ -57,7 +57,6 @@ body {
 }
 #infer-jumbotron .container h1 {
     text-shadow: -2px 0 white, 0 2px white, 2px 0 white, 0 -2px white;
-    padding-top: 10px;
 }
 /*jumbotron form*/
 .jumbotron form {
@@ -83,20 +82,42 @@ body {
 }
 /*jumbotron pseudo-form*/
 .jumbotron .pseudo-form {
+    align-content: center;
     text-align: center;
     width:390px;
     margin:0 auto;
     padding:5px;
     background-color:#fff;
     border:solid black;
+}
+.jumbotron #container-retriever {
     border-width: 3px 3px 3px 3px;
+}
+.jumbotron #container-predictions {
+    border-width: 0 3px 3px 3px;
 }
 .jumbotron .pseudo-form .input-group #btn_infer_types {
     margin-left: 109px;;
     background-color: #814F7C;
 }
-.jumbotron .pseudo-form #values, .jumbotron .pseudo-form table th, .jumbotron .pseudo-form table td {
+.jumbotron #container-predictions #btn_infer {
+    background-color: #814F7C;
+    margin-bottom: 5px;
+}
+.jumbotron .pseudo-form table {
+    margin: 5px 0 10px 74px;
+}
+.jumbotron .pseudo-form table th, .jumbotron .pseudo-form table td {
     border: 1px solid black;
+    padding: 5px;
+    text-align: center;
+}
+.jumbotron .pseudo-form table th {
+    background-color: #FFF8F7;
+}
+.jumbotron .pseudo-form #results {
+    margin: auto;
+    width: 79%;
 }
 /*jumbotron Start Training*/
 .jumbotron #train-container {

@@ -56,7 +56,7 @@
         <div class="container">
         
             <h1>Make some predictions!</h1>
-            <br/><br/>
+            <br/>
 
             <!--
             <p>Infer which model?</p>
@@ -82,28 +82,34 @@
             <div class="container pseudo-form" id="container-predictions" hidden>
             
                 <table id="values"></table>
-                <input type="submit" id='btn_infer' value="Submit" onclick="infer();" hidden/>
-                <div id="results"></div>
+                <input type="submit" class="btn btn-primary btn-lg" id='btn_infer' value="Submit" onclick="infer();" hidden/>
+                
+                <div id="results" hidden>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th>Prediction</th>
+                            </tr>
+                            <tr>
+                                <td id="new-prediction"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             
             </div>
             
-            
     <!--
     <input type="text" id='text_model' value="" />
-    
-            
     <input type="submit" id='btn_infer_types' value="Retrieve Model" onclick="infer_types();" />
--->
+    -->
             
         </div>
-        
     </div><!-- .jumbotron -->
     
       
     <footer class="footer">
-    
         <div class="container"></div>
-        
     </footer>
     
 
@@ -114,6 +120,7 @@
       
   </body>
 </html>
+
 <script>
 
 function changeVisibility() {
@@ -122,6 +129,8 @@ function changeVisibility() {
         scrollTop: $("#infer-jumbotron").offset().top
     }, 500);
 }
+    
+
 
 function infer_types() {
   $.post('/api',
@@ -150,6 +159,7 @@ function infer_types() {
               continue;
             }
             var tr = document.createElement('tr');
+            tr.setAttribute("id", "second_row");
             var td1 = document.createElement('td');
             var td2 = document.createElement('td');
             var text = document.createElement('input');
@@ -168,7 +178,7 @@ function infer_types() {
 }
 function infer() {
   var values = {};
-  $('#values tr').each(function(){
+  $('#values #second_row').each(function(){
     values[this.children[0].innerHTML] = [this.children[1].children[0].value];
   });
   $.post('/api',
@@ -180,8 +190,9 @@ function infer() {
           if (response['status'] != 'OK') {
             alert(JSON.stringify(response));
           }
-          var div = document.getElementById('results');
-          div.innerHTML = JSON.stringify(response['result']);
+          $('#results').show();
+          var div = document.getElementById('new-prediction');
+          div.innerHTML = JSON.stringify(response['result']).substring(JSON.stringify(response['result']).lastIndexOf("[")+1, JSON.stringify(response['result']).lastIndexOf("]"));
         }
   );
 }

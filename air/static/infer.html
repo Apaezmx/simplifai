@@ -55,7 +55,7 @@
     <div class="jumbotron" id="infer-jumbotron">
         <div class="container">
         
-            <h1>Make some predictions!</h1>
+            <h1 id="predictions-title">Make some predictions!</h1>
             <br/>
 
             <!--
@@ -82,7 +82,7 @@
             <div class="container pseudo-form" id="container-predictions" hidden>
             
                 <table id="values"></table>
-                <input type="submit" class="btn btn-primary btn-lg" id='btn_infer' value="Submit" onclick="infer();" hidden/>
+                <input type="submit" class="btn btn-primary btn-lg" id='btn_infer' value="Submit" onclick="infer();" />
                 
                 <div id="results" hidden>
                     <table>
@@ -123,14 +123,13 @@
 
 <script>
 
+window.onload = document.getElementById("text_model").defaultValue = localStorage.getItem("storageName");
+
 function changeVisibility() {
-    $('#container-predictions').show();
     $('html, body').animate({
         scrollTop: $("#infer-jumbotron").offset().top
     }, 500);
 }
-    
-
 
 function infer_types() {
   $.post('/api',
@@ -172,7 +171,8 @@ function infer_types() {
             tr.append(td2);
             table.append(tr);
           }
-          $('#btn_infer').show();
+          $('#container-predictions').show(250);
+           document.getElementById('uploadedSuccessfully').innerHTML = 'Make a prediction!';
         }
   );
 }
@@ -190,7 +190,7 @@ function infer() {
           if (response['status'] != 'OK') {
             alert(JSON.stringify(response));
           }
-          $('#results').show();
+          $('#results').show(250);
           var div = document.getElementById('new-prediction');
           div.innerHTML = JSON.stringify(response['result']).substring(JSON.stringify(response['result']).lastIndexOf("[")+1, JSON.stringify(response['result']).lastIndexOf("]"));
         }

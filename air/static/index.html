@@ -80,7 +80,7 @@
                 
             </form>
             
-            <div class="container" id="train-container">
+            <div class="container" id="train-container" hidden>
                 <div class="input-group">
 
                     <button type="submit" value="Start Training" class="btn btn-primary btn-lg" id='btn_train' data-loading-text="<i class='fa fa-spinner fa-spin '></i> Please wait..." onclick="startTraining();">Start Training</button>
@@ -365,6 +365,11 @@ function updateGraphs(response) {
     createGraphs(response);
 }
     
+function sendData(dataToSend) {
+    var getInput = prompt(dataToSend);
+    localStorage.setItem("storageName", getInput);
+}
+    
 function doPoll(handle){
     $.post('/api', 
            {'endpoint': 'train_status',
@@ -375,8 +380,13 @@ function doPoll(handle){
               updateGraphs(data);
               setTimeout(function(){doPoll(handle)},10000);
             } else {
-              alert('Training done!');
               chart.focus();
+              sendData(handle);
+              var userConfirm = confirm('Training is done! Do you want to make some predictions?');
+              if (userConfirm == true) {
+                  window.location.href = "http://localhost:8012/infer.html"
+              }
+              
             }
     });
 }
@@ -414,9 +424,7 @@ function stopUpload(response){
          $('#types').append(table);
          */
          model = response['handle'];
-         /*
-         $('#btn_train').show();
-         */
+         $('#train-container').show(250);
       }
       else {
          document.getElementById('result').innerHTML = 

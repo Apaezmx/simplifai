@@ -65,9 +65,10 @@ body {
     width:390px;
     margin:0 auto;
     padding:5px;
-    background-color:#fff;
+    background: rgb(255,255,255);
+    background: rgba(255,255,255,0.8);
     border:solid black;
-    border-width: 3px 3px 0 3px;
+    border-width: 3px;
 }
 .jumbotron form .form-group #uploadedSuccessfully {
     text-align: center;
@@ -93,9 +94,13 @@ body {
 }
 .jumbotron #container-retriever {
     border-width: 3px 3px 3px 3px;
+    background: rgb(255,255,255);
+    background: rgba(255,255,255,0.8);
 }
 .jumbotron #container-predictions {
     border-width: 0 3px 3px 3px;
+    background: rgb(255,255,255);
+    background: rgba(255,255,255,0.8);
 }
 .jumbotron .pseudo-form .input-group #btn_infer_types {
     margin-left: 109px;;
@@ -129,9 +134,10 @@ body {
     width:390px;
     margin:0 auto;
     padding:10px;
-    background-color:#fff;
+    background: rgb(255,255,255);
+    background: rgba(255,255,255,0.8);
     border: solid black;
-    border-width: 3px 3px 3px 3px;
+    border-width: 0 3px 3px 3px;
 }
 .jumbotron #train-container #btn_train {
     margin-top: 5px;

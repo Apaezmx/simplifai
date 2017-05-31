@@ -41,15 +41,16 @@ body {
     text-decoration-style: dashed;
     border: solid black;
     border-width: 0 2px 4px 2px;
-    height: 100vh;
     margin: 0;
 }
 /*background images and jumbotron title*/
 #index-jumbotron {
     background-image: url(../images/uk-population-density-map5.png);
+    height: 100vh;
 }
 #infer-jumbotron {
     background-image: url(../images/background-infer.png);
+    height: 100vh;
 }
 #index-jumbotron .container h1 {
     text-shadow: -2px 0 white, 0 2px white, 2px 0 white, 0 -2px white;
@@ -99,10 +100,12 @@ body {
 .jumbotron .pseudo-form .input-group #btn_infer_types {
     margin-left: 109px;;
     background-color: #814F7C;
+    height: 45px;
 }
 .jumbotron #container-predictions #btn_infer {
     background-color: #814F7C;
     margin-bottom: 5px;
+    height: 45px;
 }
 .jumbotron .pseudo-form table {
     margin: 5px 0 10px 74px;
@@ -135,9 +138,6 @@ body {
     margin-bottom: 5px;
     margin-left: 111px;
     background-color: #814F7C;
-}
-/*jumbotron predictions*/
-.jumbotron .container #container-predictions {
 }
 
 /*graph style*/

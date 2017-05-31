@@ -52,7 +52,7 @@
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Services<span class="caret"></span></a>
                   <ul class="dropdown-menu">
                     <li><a href="#">Train a model</a></li>
-                    <li><a href="#">Predictions</a></li>
+                    <li><a href="infer.html">Make predictions</a></li>
                   </ul>
                 </li>
                 <li><a href="#">Contact</a></li>
@@ -61,11 +61,10 @@
           </div><!-- /.container-fluid -->
         </nav>
       
-    <div class="jumbotron">
+    <div class="jumbotron" id="index-jumbotron">
         <div class="container">
-            <br>
             <h1>Upload a .CSV to train your model!</h1>
-            <br/><br/><br/>
+            <br/><br/>
             
             <form action="/api" id="uploader" method="post" enctype="multipart/form-data">
                 <div class="form-group has-success">
@@ -74,14 +73,21 @@
                 </div>
                 
                 <div class="input-group">
-                    <button type="submit" value="Start upload" class="btn btn-primary btn-lg" id="load" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Uploading">Start upload</button>
-                    <button type="submit" value="Start Training" class="btn btn-primary btn-lg" id='btn_train' data-loading-text="<i class='fa fa-spinner fa-spin '></i> Please wait" onclick="startTraining();">Start Training</button>
+                    <button type="submit" value="Start upload" class="btn btn-primary btn-lg" id="load" data-loading-text="<i class='fa fa-spinner fa-spin '></i> Uploading...">Start upload</button>
                 </div>
-           
                 
                 <input type="text" name="endpoint" value="upload_csv" hidden/>
                 
             </form>
+            
+            <div class="container" id="train-container" hidden>
+                <div class="input-group">
+
+                    <button type="submit" value="Start Training" class="btn btn-primary btn-lg" id='btn_train' data-loading-text="<i class='fa fa-spinner fa-spin '></i> Please wait..." onclick="startTraining();">Start Training</button>
+
+                </div>
+            </div>
+            
             
             <!--
             <br/>
@@ -138,8 +144,9 @@ $('#btn_train').on('click', function() {
     setTimeout(function() {
         $this.button('reset');
     }, 20000);
+    document.getElementById('uploadedSuccessfully').innerHTML = 'Enjoy the ride!';
 });
-
+    
 var model = "";
 $('#uploader').submit(function(e) {
     startUpload();
@@ -307,11 +314,10 @@ function hideData() {
 }
     
 function generateName(key) {
-    var width = key.substring(key.lastIndexOf('width')+8, key.lastIndexOf(", 'a"));
+    var layers = key.substring(key.lastIndexOf('layers')+11, key.lastIndexOf("', ("));
     var activation = key.substring(key.lastIndexOf('activation')+14, key.lastIndexOf("', 'o"));
-    var optimizer = key.substring(key.lastIndexOf('optimizer')+13, key.lastIndexOf("', 'd"));
-    var depth = key.substring(key.lastIndexOf('depth')+8);
-    return activation.slice(0, 3)+width+"-"+optimizer.slice(0, 3)+depth;
+    var optimizer = key.substring(key.lastIndexOf('optimizer')+13, key.lastIndexOf("'"));
+    return activation.slice(0, 3)+"-"+optimizer.slice(0, 3)+layers;
 }
 
 var drawnData = []
@@ -359,6 +365,11 @@ function updateGraphs(response) {
     createGraphs(response);
 }
     
+function sendData(dataToSend) {
+    var getInput = prompt(dataToSend);
+    localStorage.setItem("storageName", getInput);
+}
+    
 function doPoll(handle){
     $.post('/api', 
            {'endpoint': 'train_status',
@@ -369,8 +380,13 @@ function doPoll(handle){
               updateGraphs(data);
               setTimeout(function(){doPoll(handle)},10000);
             } else {
-              alert('Training done!');
               chart.focus();
+              sendData(handle);
+              var userConfirm = confirm('Training is done! Do you want to make some predictions?');
+              if (userConfirm == true) {
+                  window.location.href = "http://localhost:8012/infer.html"
+              }
+              
             }
     });
 }
@@ -386,7 +402,7 @@ function startUpload() {
 function stopUpload(response){
       var result = '';
       if (response['status'] == 'OK'){
-      document.getElementById('uploadedSuccessfully').innerHTML =
+        document.getElementById('uploadedSuccessfully').innerHTML =
            'Your file was uploaded successfully! Start training!';
          table = document.createElement('table');
          headers = document.createElement('tr');
@@ -400,6 +416,7 @@ function stopUpload(response){
           cell.innerHTML = response['types'][key];
           row.append(cell);
          }
+          
          table.append(headers);
          table.append(row);
          /*
@@ -407,7 +424,7 @@ function stopUpload(response){
          $('#types').append(table);
          */
          model = response['handle'];
-         $('#btn_train').show();
+         $('#train-container').show(250);
       }
       else {
          document.getElementById('result').innerHTML = 

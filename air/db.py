@@ -61,28 +61,23 @@ def parse_val(value):
   # No match
   return value.decode('utf-8', 'ignore'), 'str'
  
-def persist_keras_models(handle, models):
-  print str(models)
+def persist_keras_model(handle, model):
   model_dir = config.ROOT_PATH + MODEL_PATH
   
-  # Clear first all previously persisted models
+  # Clear first all previously persisted models.
   for f in os.listdir(model_dir):
-    if re.search(handle + "_[0-9]+", f):
+    if re.search(handle + "_keras", f):
         os.remove(os.path.join(model_dir, f))
-  for model_name, model in models.iteritems():
-    print 'Persisting ' + handle + '_' + unicode(model_name)
-    model.save(os.path.join(model_dir, handle + '_' + unicode(model_name)))
+  print 'Persisting ' + handle + '_keras'
+  model.save(os.path.join(model_dir, handle + '_keras'))
 
-def load_keras_models(handle):
+def load_keras_model(handle):
   model_dir = config.ROOT_PATH + MODEL_PATH
-  models = {}
   
   # Clear first all previously persisted models
   for f in os.listdir(model_dir):
-    if re.search(handle + "_.*", f):
-      models[f.replace(handle+'_','')] = load_model(os.path.join(model_dir, f))
-
-  return models
+    if re.search(handle + "_keras", f):
+      return load_model(os.path.join(model_dir, f))
 
 def delete_model(handle):
   model_dir = config.ROOT_PATH + MODEL_PATH

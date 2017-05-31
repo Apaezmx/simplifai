@@ -1,7 +1,7 @@
 import json
 import math
 import os
-from db import get_model, new_model, save_model, delete_model, load_keras_models
+from db import get_model, new_model, save_model, delete_model
 from keras.backend.tensorflow_backend import clear_session
 from model import ModelStatus
 

@@ -193,8 +193,8 @@ class Model():
                           validation_split=VAL_SPLIT)
       if persist:
         # Save the model for inference purposes.
-        from db import persist_keras_models
-        persist_keras_models(self.get_handle(), {model_name: model})
+        from db import persist_keras_model
+        persist_keras_model(self.get_handle(), model)
       else:
         # Save metrics of this run.
         if model_name not in self.val_losses:
@@ -290,8 +290,8 @@ class Model():
         
   # Values needs to be in the same format as self.data. That is a dictionary of header to value column.
   def infer(self, values):
-    from db import load_keras_models
-    models = load_keras_models(self.get_handle())
+    from db import load_keras_model
+    model = load_keras_model(self.get_handle())
     
     output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')]
     
@@ -301,11 +301,10 @@ class Model():
     print 'X_infer: ' + str(X_infer)
     print 'norms: ' + str(self.norms)
     outputs = {}
-    for model_name, model in models.iteritems():
-      out = model.predict(X_infer).tolist()
-      print 'Raw out: ' + str(out)
-      for idx, value in enumerate(out[0]):
-        outputs[model_name] = [self.normalize_float(value, output_headers[0], reverse=True)]
+    out = model.predict(X_infer).tolist()
+    print 'Raw out: ' + str(out)
+    for idx, value in enumerate(out[0]):
+      outputs['best'] = [self.normalize_float(value, output_headers[0], reverse=True)]
     print 'Outputs ' + str(outputs)
     return outputs
     

@@ -22,8 +22,8 @@ def layer_choice(num):
     layer_neurons.append(hp.choice('neurons, c'+str(num)+'l'+str(i), [('c'+str(num)+'l'+str(i), neuron_choice(num, i, x)) for x in range(1,11)]))
   return layer_neurons
 
-def train(handle, train_epochs=50):
-  from db import load_keras_models, get_model, save_model
+def train(handle, train_epochs=10):
+  from db import get_model, save_model
   from model import ModelStatus
   info('Running training on new process')
   air_model = get_model(handle)

@@ -9,7 +9,6 @@ class CustomDense(Layer):
   def __init__(self, activations, **kwargs):
     self.activations = activations
     self.output_dim = len(activations)
-    self.custom_shape = kwargs['input_shape']
     super(CustomDense, self).__init__(**kwargs)
 
   def build(self, input_shape):

@@ -1,6 +1,5 @@
 import json
 import numpy as np
-from custom_dense import CustomDense
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 from keras.callbacks import ModelCheckpoint
 from keras.models import Sequential
@@ -8,6 +7,7 @@ from keras.layers import Embedding, Dense, Activation, Merge, Flatten, Dropout
 from keras.layers.normalization import BatchNormalization
 from keras.optimizers import *
 from keras.preprocessing.sequence import pad_sequences
+from keras_utils import single_activation
 from multiprocessing import Process
 from train import train
 
@@ -162,17 +162,19 @@ class Model():
       # We will add 'depth' layers with 'net_width' neurons.
       depth = len(layers[1])
       for i in range(depth):
-        activations = layers[1][i][1]
+        layer_activation = layers[1][i][1][1]
+        layer_width = layers[1][i][1][0]
         if i == 0 and depth != 1:
-          print 'Input: ' + str(input_size) + ', ' + str(len(activations))
-          model.add(CustomDense(activations, input_shape=(input_size,)))
+          model.add(Dense(layer_width, input_shape=(input_size,)))
+          model.add(BatchNormalization())
+          model.add(Activation(layer_activation))
           model.add(Dropout(dropout))
         elif i == depth - 1:
-          print 'Input: ' + str(len(layers[1][i-1][1])) + ', ' + str(len(output_headers)) 
           model.add(Dense(len(output_headers), input_shape=(len(layers[1][i-1][1]),)))
         else:
-          print 'Input: ' + str(len(layers[1][i-1][1])) + ', ' + str(len(activations))
-          model.add(CustomDense(activations, input_shape=(len(layers[1][i-1][1]),)))
+          model.add(Dense(layer_width, input_shape=(len(layers[1][i-1][1]),)))
+          model.add(BatchNormalization())
+          model.add(Activation(layer_activation))
           model.add(Dropout(dropout))
 
       # No Activation in the end for now... Assuming regression always.

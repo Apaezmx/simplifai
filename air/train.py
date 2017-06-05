@@ -7,19 +7,16 @@ def info(title):
     print 'module name: ' +  __name__
     print 'parent process: ' + str(os.getppid())
     print 'process id: ' + str(os.getpid())
+['relu', 'sigmoid', 'tanh', 'linear']
 
-def neuron_choice(numc, numl, numn):
-  neurons = []
-  for i in range(numn):
-    # For each neuron choose activation.
-    neurons.append(hp.choice('c'+str(numc)+'l'+str(numl)+'n'+str(numn)+'nn'+str(i), ['relu', 'sigmoid', 'tanh', 'linear']))
-  return neurons
+def gen_layer(num_ls, num_l, width):
+  return (width, hp.choice('layer activation ' + str(num_ls) + str(num_l) + str(width), ['relu', 'sigmoid', 'tanh', 'linear']))
 
 def layer_choice(num):
   layer_neurons = []
   for i in range(num):
     # Choose number of neurons from 1 - 10.
-    layer_neurons.append(hp.choice('neurons, c'+str(num)+'l'+str(i), [('c'+str(num)+'l'+str(i), neuron_choice(num, i, x)) for x in range(1,11)]))
+    layer_neurons.append(hp.choice('num_layers ' + str(num) + ' layer ' + str(i), [('num_layers ' + str(num) + ' layer ' + str(i) + ' width ' + str(x), gen_layer(num, i, x)) for x in range(1,11)]))
   return layer_neurons
 
 def train(handle, train_epochs=10):

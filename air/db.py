@@ -1,3 +1,5 @@
+import bottle
+import bottle.ext.memcache
 import csv
 import json
 import random
@@ -5,33 +7,48 @@ import re
 import os
 from config import config
 from datetime import datetime
-from keras.models import load_model
+from keras.models import load_model, model_from_json
 from model import Model, ModelStatus
 
 MODEL_PATH = '/models'
+HANDLE_LENGTH = 10
+
+def handle2path(handle):
+  return config.ROOT_PATH + MODEL_PATH + "/" + handle
+
+def path2handle(path):
+  return path.split('/')[-1]
 
 def new_model():
   filename = random_hex()
   while os.path.isfile(filename):
-      filename = random_hex()
+    filename = random_hex()
 
   # Create file
   model_path = config.ROOT_PATH + MODEL_PATH + '/' + filename
   model = Model(path=model_path)
   with open(model_path, 'w+') as f:
-      f.write(model.to_json())
+    f.write(model.to_json())
+    config.get_mc().set(path2handle(model_path), model.to_json())
   
   return model
 
 def save_model(model):
   with open(model.model_path, 'w+') as f:
-      f.write(model.to_json())
+    f.write(model.to_json())
+    config.get_mc().set(path2handle(model.model_path), model.to_json())
 
 def get_model(handle):
+  mem_try = config.get_mc().get(handle)
+  if mem_try:
+    m = Model()
+    m.from_json(mem_try)
+    return m
   model_path = config.ROOT_PATH + MODEL_PATH + "/" + handle
   with open(model_path, "r") as f:
-      model = Model()
-      model.from_json(f.read())
+    model = Model()
+    model.from_json(f.read())
+  config.get_mc().set(handle, model.to_json())
   return model
   
 def parse_val(value):
@@ -68,16 +85,29 @@ def persist_keras_model(handle, model):
   for f in os.listdir(model_dir):
     if re.search(handle + "_keras", f):
         os.remove(os.path.join(model_dir, f))
-  print 'Persisting ' + handle + '_keras'
-  model.save(os.path.join(model_dir, handle + '_keras'))
+  name = handle + '_keras'
+  print 'Persisting ' + name
+  model.save(os.path.join(model_dir, name))
+  config.get_mc().set(name, model.to_json())
+  config.get_mc().set(name+'weights', model.get_weights())
 
 def load_keras_model(handle):
+  name = handle + '_keras'
+  print 'load ' + name
+  mem_try = config.get_mc().get(name)
+  if mem_try:
+    print 'using mem_cache'
+    m = model_from_json(mem_try)
+    m.set_weights(config.get_mc().get(name+'weights'))
+    return m
+
   model_dir = config.ROOT_PATH + MODEL_PATH
   
-  # Clear first all previously persisted models
   for f in os.listdir(model_dir):
-    if re.search(handle + "_keras", f):
-      return load_model(os.path.join(model_dir, f))
+    if re.search(name, f):
+      model = load_model(os.path.join(model_dir, f))
+      config.get_mc().set(name, model.to_json())
+      return model
 
 def delete_model(handle):
   model_dir = config.ROOT_PATH + MODEL_PATH
@@ -139,6 +169,6 @@ def load_csvs(file_list):
     return data, types, norms
 
 def random_hex():
-  ran = random.randrange(16**10)
+  ran = random.randrange(16**HANDLE_LENGTH)
   return "%010x" % ran
 

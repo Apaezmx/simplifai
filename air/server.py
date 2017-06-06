@@ -1,16 +1,24 @@
 import argparse
+import bottle
 from api import resolve_endpoint
-from bottle import error, post, request, route, run, static_file, template
+from bottle import error, post, request, route, run, static_file, template, Bottle
 from config import config
 import os
 
-@error(404)
+app = bottle.Bottle()
+plugin = bottle.ext.memcache.MemcachePlugin(servers=['localhost:11211'])
+app.install(plugin)
+
+global mem_store
+
+@app.error(404)
 def error404(error):
   print error
   return 'Nothing here, sorry'
 
-@post('/api')
-def serve_api():
+@app.post('/api')
+def serve_api(mc):
+  config.set_mc(mc)
   print 'Serving '
   for k, v in request.forms.iteritems():
     print str(k) + ':' + str(v)
@@ -24,22 +32,20 @@ def serve_api():
           {k: v for k, v in request.files.iteritems()})
   return response
 
-@route('/infer')
+@app.route('/infer')
 def serve_index():
   return static_file('infer.html', root=config.STATIC_PATH)
   
-@route('/')
+@app.route('/')
 def serve_index():
   return static_file('index.html', root=config.STATIC_PATH)
 
-@route('/<filepath:path>')
+@app.route('/<filepath:path>')
 def server_static(filepath):
   return static_file(filepath, root=config.STATIC_PATH)
 
-def start():
-  parser = argparse.ArgumentParser(description='Running air server')
-  parser.add_argument('--root_path', type=str, help='filepath to server root')
-  args = parser.parse_args()
+parser = argparse.ArgumentParser(description='Running air server')
+parser.add_argument('--root_path', type=str, help='filepath to server root')
+args = parser.parse_args()
 
-  run(reloader=True, host='localhost', port=8012, server='cherrypy')
-start()
+run(app, reloader=True, host='localhost', port=8012, server='cherrypy')

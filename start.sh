@@ -6,7 +6,7 @@ git clone https://Apaezmx@bitbucket.org/Apaezmx/pusher.git
 
 cd pusher
 
-virtualenv .
+virtualenv --distribute .
 
 source bin/activate
 

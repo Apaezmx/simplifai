@@ -304,12 +304,12 @@ class Model():
     print 'norms: ' + str(self.norms)
     outputs = {}
     out = model.predict(X_infer).tolist()
+    out = model.predict(X_infer).tolist()
     print 'Raw out: ' + str(out)
     for idx, value in enumerate(out[0]):
       outputs['best'] = [self.normalize_float(value, output_headers[0], reverse=True)]
     print 'Outputs ' + str(outputs)
     return outputs
-    
 
   def from_json(self, json_str):
     json_obj = json.loads(json_str)

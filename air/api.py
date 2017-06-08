@@ -1,7 +1,7 @@
 import json
 import math
 import os
-from db import get_model, new_model, save_model, delete_model
+from db import get_model, new_model, save_model, delete_model, clear_thread_cache
 from keras.backend.tensorflow_backend import clear_session
 from model import ModelStatus
 
@@ -31,7 +31,7 @@ def infer_types(args, files):
 
 @endpoint
 def infer(args, files):
-  clear_session()  # Clears TF graphs
+  #clear_session()  # Clears TF graphs.
   try:
     model = get_model(args['handle'])
   except Exception as e:
@@ -45,7 +45,8 @@ def infer(args, files):
 
 @endpoint
 def train(args, files):
-  clear_session()  # Clears TF graphs
+  clear_session()  # Clears TF graphs.
+  clear_thread_cache()  # We need to clear keras models since graph is deleted.
   try:
     model = get_model(args['handle'])
   except:

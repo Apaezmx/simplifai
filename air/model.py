@@ -9,6 +9,7 @@ from keras.optimizers import *
 from keras.preprocessing.sequence import pad_sequences
 from keras_utils import single_activation
 from multiprocessing import Process
+import tensorflow as tf
 from train import train
 
 import numpy as np
@@ -292,24 +293,24 @@ class Model():
         
   # Values needs to be in the same format as self.data. That is a dictionary of header to value column.
   def infer(self, values):
-    from db import load_keras_model
-    model = load_keras_model(self.get_handle())
-    
-    output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')]
-    
-    self.normalize_values(values)
-    string_data = self.intergerize_string(values)
-    X_infer, _ = self.get_data_sets(data=values, string_features=string_data)
-    print 'X_infer: ' + str(X_infer)
-    print 'norms: ' + str(self.norms)
-    outputs = {}
-    out = model.predict(X_infer).tolist()
-    out = model.predict(X_infer).tolist()
-    print 'Raw out: ' + str(out)
-    for idx, value in enumerate(out[0]):
-      outputs['best'] = [self.normalize_float(value, output_headers[0], reverse=True)]
-    print 'Outputs ' + str(outputs)
-    return outputs
+    with tf.get_default_graph().as_default() as g:
+      output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')]
+      
+      self.normalize_values(values)
+      string_data = self.intergerize_string(values)
+      X_infer, _ = self.get_data_sets(data=values, string_features=string_data)
+      print 'X_infer: ' + str(X_infer)
+      print 'norms: ' + str(self.norms)
+      outputs = {}
+      from db import load_keras_model
+      model = load_keras_model(self.get_handle())
+      g.finalize()
+      out = model.predict(X_infer).tolist()
+      print 'Raw out: ' + str(out)
+      for idx, value in enumerate(out[0]):
+        outputs['best'] = [self.normalize_float(value, output_headers[0], reverse=True)]
+      print 'Outputs ' + str(outputs)
+      return outputs
 
   def from_json(self, json_str):
     json_obj = json.loads(json_str)

@@ -6,6 +6,8 @@ git clone https://Apaezmx@bitbucket.org/Apaezmx/pusher.git
 
 cd pusher
 
+mkdir air/models
+
 virtualenv --distribute .
 
 source bin/activate
@@ -13,3 +15,5 @@ source bin/activate
 pip install --upgrade pip
 
 pip install -r reqs.txt
+
+easy_install bottle_memcache

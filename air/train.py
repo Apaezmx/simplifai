@@ -41,9 +41,10 @@ def train(handle, train_epochs=10):
   for trial in trials.trials[:2]:
       print trial
   
+  model_fn = air_model.run_model(persist=True)
+  model_fn(space_eval(fspace, best))  # Train and persist best model.
+
   print 'Training finished'
   air_model.status = ModelStatus.TRAINED
   air_model.best_model = best
   save_model(air_model)
-  model_fn = air_model.run_model(persist=True)
-  model_fn(space_eval(fspace, best))  # Train and persist best model.

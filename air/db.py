@@ -12,6 +12,10 @@ from model import Model, ModelStatus
 
 MODEL_PATH = '/models'
 HANDLE_LENGTH = 10
+keras_cache = {}
+
+def clear_thread_cache():
+  keras_cache = {}
 
 def handle2path(handle):
   return config.ROOT_PATH + MODEL_PATH + "/" + handle
@@ -88,26 +92,26 @@ def persist_keras_model(handle, model):
   name = handle + '_keras'
   print 'Persisting ' + name
   model.save(os.path.join(model_dir, name))
-  config.get_mc().set(name, model.to_json())
-  config.get_mc().set(name+'weights', model.get_weights())
 
-def load_keras_model(handle):
+def _load_keras_model(handle):
   name = handle + '_keras'
   print 'load ' + name
-  mem_try = config.get_mc().get(name)
-  if mem_try:
-    print 'using mem_cache'
-    m = model_from_json(mem_try)
-    m.set_weights(config.get_mc().get(name+'weights'))
-    return m
-
   model_dir = config.ROOT_PATH + MODEL_PATH
   
   for f in os.listdir(model_dir):
     if re.search(name, f):
       model = load_model(os.path.join(model_dir, f))
-      config.get_mc().set(name, model.to_json())
+      model.model._make_predict_function()
+      print 'From disk'
       return model
+
+def load_keras_model(handle):
+  if handle in keras_cache:
+    print 'From thread cache'
+    return keras_cache[handle]
+  model = _load_keras_model(handle)
+  keras_cache[handle] = model
+  return model
 
 def delete_model(handle):
   model_dir = config.ROOT_PATH + MODEL_PATH

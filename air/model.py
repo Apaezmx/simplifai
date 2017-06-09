@@ -138,10 +138,11 @@ class Model():
           feature_models.append(model)
         
         numeric_inputs = len(self.data) - len(self.string_features) - len(output_headers)
-        num_model = Sequential()
-        num_model.add(Dense(numeric_inputs, input_shape=(numeric_inputs,)))
-        total_input_size += numeric_inputs
-        feature_models.append(num_model)
+        if numeric_inputs:
+          num_model = Sequential()
+          num_model.add(Dense(numeric_inputs, input_shape=(numeric_inputs,)))
+          total_input_size += numeric_inputs
+          feature_models.append(num_model)
         
         merged_model = Sequential()
         if len(feature_models) < 0:
@@ -177,7 +178,9 @@ class Model():
           model.add(BatchNormalization())
           model.add(Activation(layer_activation))
           model.add(Dropout(dropout))
-
+      
+      if not depth:
+        model.add(Dense(len(output_headers), input_shape=(input_size,)))
       # No Activation in the end for now... Assuming regression always.
       model.compile(loss='mse',
             optimizer=optimizer,
@@ -187,7 +190,10 @@ class Model():
         nb_epoch = 500
       
       model_name = str(hp).replace('{', '').replace('}', '')
+      if persist:
+        X_train, Y_train = self.get_data_sets(sample=False)
       X_train, Y_train = self.get_data_sets(sample=True)  # Only use a small sample.
+
       VAL_SPLIT = 0.1  # Split of data to use as validation.
       history = model.fit(X_train, Y_train, 
                           batch_size=batch_size, 
@@ -221,7 +227,7 @@ class Model():
     data = data if data else self.data
     string_features = string_features if string_features else self.string_features
     sample_size = len(data.itervalues().next())
-    if sample_size > 10000:
+    if sample and sample_size > 100000:
       sample_size = sample_size / 10
     X_train = []
     Y_train = []
@@ -242,12 +248,13 @@ class Model():
           Y_train.append(feature[idx])
           continue
         row.append(feature[idx])
- 
-      nums.append(row)
-      if sample and len(nums) == sample_size:
+      if row:
+        nums.append(row)
+      if sample and len(Y_train) >= sample_size:
         break
       
-    X_train.append(np.array(nums))
+    if nums:
+      X_train.append(np.array(nums))
     
     return X_train, Y_train
       
@@ -307,8 +314,11 @@ class Model():
       g.finalize()
       out = model.predict(X_infer).tolist()
       print 'Raw out: ' + str(out)
-      for idx, value in enumerate(out[0]):
-        outputs['best'] = [self.normalize_float(value, output_headers[0], reverse=True)]
+      for idx, value in enumerate(out):
+        if 'best' in outputs:
+          outputs['best'].append(self.normalize_float(value[0], output_headers[0], reverse=True))
+        else:
+          outputs['best'] = [self.normalize_float(value[0], output_headers[0], reverse=True)]
       print 'Outputs ' + str(outputs)
       return outputs
 

@@ -37,7 +37,3 @@
 ehthumbs.db
 Thumbs.db
 *.*~
-
-# Data folders #
-################
-air/models

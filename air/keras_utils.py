@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 
 def activate(activation, tensor):
+  """ Maps a string activation to the keras backend function """
   if activation == 'tanh':
     return K.tanh(tensor)
   elif activation == 'sigmoid':

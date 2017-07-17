@@ -17,6 +17,7 @@ import os
 import os.path
 
 class ModelStatus():
+  """ Enum class to keep track of the Model's state. """
   NULL = 0
   CREATED = 1
   TRAINING = 2
@@ -61,6 +62,9 @@ class Model():
     return self.model_path.split('/')[-1]
     
   def add_train_file(self, filename):
+    """ Adds a file to the current Model's dataset.
+    Runs the file parsing and data verifications.
+    """
     from db import load_csvs
     self.train_files.append(filename)
     data, types, norms = load_csvs(self.train_files)
@@ -78,6 +82,12 @@ class Model():
         self.data[k].extend(data[k])
   
   def process_text_feature(self, feature):
+    """ Creates a dictionary of string to integer ID.
+    Calculates the frequency dictionary. Sorts the dictionary by count and creates a new dictionary where the key is
+    the string and the value is the index of the sorted dictionary.
+    Returns: A dict and a list. The dict contains word->integer ID, the list contains the frequency count for each
+    string.
+    """
     word_freq = {}
     for f in feature:
       if isinstance(f, list):
@@ -91,8 +101,8 @@ class Model():
 
   def run_model(self, persist=False):
     def run_model_fn(hp):
-      """
-        hp: hyperparameter dictionary.
+      """ Definition to be evaluated by the black box optimizer.
+        Params: hyperparameter dictionary.
       """
       print str(hp)
       output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')]
@@ -222,8 +232,10 @@ class Model():
     return run_model_fn
     
   
-  # Slices 'data' into lists where each row contains all features. 
   def get_data_sets(self, data=None, string_features=None, sample=False):
+    """ Slices 'data' into lists where each row contains all features. 
+    Returns: pair of X, Y where X contains the inputs and Y the outputs.
+    """
     data = data if data else self.data
     string_features = string_features if string_features else self.string_features
     sample_size = len(data.itervalues().next())
@@ -261,20 +273,26 @@ class Model():
   # TODO: implement distributed training :O.
   # For now kick-off new process which round-robins doing one epoch each time.
   def start_training(self):
+    """ Kicks off the black box optmization algorithm. """
     print 'Starting process'
     train(self.get_handle())
     
   def normalize_float(self, val, header, reverse=False):
+    """ Normalizes value using the normalization boundaries from norms.
+    If reverse is true then it unnormalizes the result.
+    """
     if reverse:
       return val * (self.norms[header][1] - self.norms[header][0]) + self.norms[header][0]
     return (val-self.norms[header][0])/(self.norms[header][1] - self.norms[header][0])
 
   def normalize_values(self, values):
+    """ Normalizes all non-string features in 'values'. """
     for header, column in values.iteritems():
       if self.types[header] != 'str':
         values[header] = [self.normalize_float(float(x), header) for x in column]
   
   def intergerize_string(self, data):
+    """ Transforms all string features into integer arrays. """
     # Process string features.
     string_features = []
     for header, column in data.iteritems():
@@ -298,8 +316,12 @@ class Model():
     
     return string_features
         
-  # Values needs to be in the same format as self.data. That is a dictionary of header to value column.
+
   def infer(self, values):
+    """ Runs the graph to do inferences on the input 'values'.
+    Values need to be in the same format as self.data. That is a dictionary of header to value column.
+    Returns: The predictions as a dictionary.
+    """
     with tf.get_default_graph().as_default() as g:
       output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')]
       
@@ -323,11 +345,15 @@ class Model():
       return outputs
 
   def from_json(self, json_str):
+    """ Tries to fill the current instance' fields with the values in the json_str.
+    Raises: Exception if not all fields are present in the json map.
+    """
     json_obj = json.loads(json_str)
     members = [a for a in dir(self) if not a.startswith('__') and not callable(getattr(self,a))]
     for member in members:
       setattr(self, member, json_obj[member])
     
   def to_json(self):
+    """ Converts the current instance to json by traversing all fields and putting them into a json map. """
     members = [a for a in dir(self) if not a.startswith('__') and not callable(getattr(self,a))]
     return json.dumps({member: getattr(self, member) for member in members})

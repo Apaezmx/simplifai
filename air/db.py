@@ -12,18 +12,23 @@ from model import Model, ModelStatus
 
 MODEL_PATH = '/models'
 HANDLE_LENGTH = 10
-keras_cache = {}
+keras_cache = {}  # Local thread memory cache.
 
 def clear_thread_cache():
   keras_cache = {}
 
 def handle2path(handle):
+  """ Translates a handle to a full path on the FS. """
   return config.ROOT_PATH + MODEL_PATH + "/" + handle
 
 def path2handle(path):
+  """ Translates a full path to a handle. """
   return path.split('/')[-1]
 
 def new_model():
+  """ Construcs an empty Model assiging it a new random hex ID and persiting it to disk. 
+  Returns: The Model instance.
+  """
   filename = random_hex()
   while os.path.isfile(filename):
     filename = random_hex()
@@ -38,24 +43,34 @@ def new_model():
   return model
 
 def save_model(model):
+  """ Saves the given model to disk. """
   with open(model.model_path, 'w+') as f:
     f.write(model.to_json())
     config.get_mc().set(path2handle(model.model_path), model.to_json())
 
 def get_model(handle):
+  """ Fetches the model from memory or disk with a matching handle.
+  Returns: The Model instance if the model is found, None otherwise.
+  """
   mem_try = config.get_mc().get(handle)
   if mem_try:
     m = Model()
     m.from_json(mem_try)
     return m
   model_path = config.ROOT_PATH + MODEL_PATH + "/" + handle
-  with open(model_path, "r") as f:
-    model = Model()
-    model.from_json(f.read())
-  config.get_mc().set(handle, model.to_json())
-  return model
+  try:
+    with open(model_path, "r") as f:
+      model = Model()
+      model.from_json(f.read())
+      config.get_mc().set(handle, model.to_json())
+    return model
+  except:
+    return None
   
 def parse_val(value):
+  """ Infers the type of the value by trying to parse it to different formats.
+  Returns: The parse value and the type.
+  """
   if not value:
     return value, None
   tests = [
@@ -83,6 +98,8 @@ def parse_val(value):
   return value.decode('utf-8', 'ignore'), 'str'
  
 def persist_keras_model(handle, model):
+  """ Persists a keras model to disk.
+  """
   model_dir = config.ROOT_PATH + MODEL_PATH
   
   # Clear first all previously persisted models.
@@ -94,6 +111,9 @@ def persist_keras_model(handle, model):
   model.save(os.path.join(model_dir, name))
 
 def _load_keras_model(handle):
+  """ Loads a keras model from disk.
+  Returns: The keras model instance if found, None otherwise.
+  """
   name = handle + '_keras'
   print 'load ' + name
   model_dir = config.ROOT_PATH + MODEL_PATH
@@ -106,6 +126,9 @@ def _load_keras_model(handle):
       return model
 
 def load_keras_model(handle):
+  """ Loads a keras model from cache or disk.
+  Returns: The keras model instance.
+  """
   if handle in keras_cache:
     print 'From thread cache'
     return keras_cache[handle]
@@ -114,12 +137,20 @@ def load_keras_model(handle):
   return model
 
 def delete_model(handle):
+  """ Deletes all models with the given handle if found. """
   model_dir = config.ROOT_PATH + MODEL_PATH
   for f in os.listdir(model_dir):
     if re.search(handle + ".*", f):
         os.remove(os.path.join(model_dir, f))
+        config.get_mc().delete(handle)
+        
   
 def load_csvs(file_list):  
+  """ Loads csv from files and returns the parsed value dictionary.
+  Params: The list of files.
+  Returns: Three dictionaries. The first is feature-name -> value_list, the second one feature_name -> type and the
+  third one feature_name -> [min_value, max_value] if applies.
+  """
   print 'File of csvs to load ' + unicode(file_list)
   data = {}
   types = {}
@@ -129,7 +160,7 @@ def load_csvs(file_list):
         reader = csv.reader(read_f)
         headers = []
         for row in reader:
-          if not headers:
+          if not headers:  # If first row, load the headers assuming they are contained in the first row.
             headers = row
             output_headers = 0
             for h in headers:
@@ -138,7 +169,7 @@ def load_csvs(file_list):
               output_headers += 1 if h.startswith('output_') else 0
             if not output_headers:
               return 'No outputs defined in CSV. Please define columns as outputs by preppending \'output_\'.', ''
-          else:
+          else:  # If not first row, parse values assuming the headers dictionary has been already filled.
             for idx, value in enumerate(row):
               val, typ = parse_val(value)
               data[headers[idx]].append(val)
@@ -147,6 +178,7 @@ def load_csvs(file_list):
                 types[headers[idx]] = typ
     else:
       print 'WARN: CSV %s not found' % f
+    
     # Fix '' values, and standardize formats.
     for header, column in data.iteritems():
       for idx, value in enumerate(column):
@@ -154,15 +186,17 @@ def load_csvs(file_list):
           data[header][idx] = 0 if types[header] != 'str' else ''
         else:
           data[header][idx] = unicode(data[header][idx]) if types[header] == 'str' else data[header][idx]
+    
     # Normalize numeric inputs to -1 to 1.
     norms = {}
-    
     for header, column in data.iteritems():
       if types[header] != 'str':
         floor = float(min(column))
         ceil = float(max(column))
         norms[header] = (floor, ceil)
         data[header] = [(x-floor)/(ceil - floor) for x in column]
+    
+    # Run some last verifications so that all features have the same amount of rows.
     length = 0
     for header, column in data.iteritems():
       if not length:
@@ -173,6 +207,7 @@ def load_csvs(file_list):
     return data, types, norms
 
 def random_hex():
+  """ Creates a random hex string ID """
   ran = random.randrange(16**HANDLE_LENGTH)
   return "%010x" % ran
 

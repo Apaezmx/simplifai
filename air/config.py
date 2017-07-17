@@ -1,9 +1,11 @@
 import os
 
 class Config():
-  mc = {}
-  ROOT_PATH = os.path.dirname(os.path.realpath(__file__))
-  STATIC_PATH = os.path.dirname(os.path.realpath(__file__)) + '/static'
+  """ Static global class holding important parameters.
+  """
+  mc = {}  # Memchached object shared across threads.
+  ROOT_PATH = os.path.dirname(os.path.realpath(__file__))  # Path to the project's directory.
+  STATIC_PATH = os.path.dirname(os.path.realpath(__file__)) + '/static'  # Path to static resources.
   
   def set_mc(self, mc):
     self.mc = mc
@@ -12,4 +14,4 @@ class Config():
     return self.mc
 
 global config
-config = Config()
+config = Config()  # Singleton class object to be used across the project.

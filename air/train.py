@@ -3,6 +3,7 @@ from hyperopt import fmin, tpe, hp, STATUS_OK, Trials, space_eval
 from keras.callbacks import ModelCheckpoint
 
 def info(title):
+    """ Prints out some threads stats. """
     print title
     print 'module name: ' +  __name__
     print 'parent process: ' + str(os.getppid())
@@ -10,9 +11,11 @@ def info(title):
 ['relu', 'sigmoid', 'tanh', 'linear']
 
 def gen_layer(num_ls, num_l, width):
+  """ Given the number of layers, the layer number and width, returns a choice of activation for the layer. """
   return (width, hp.choice('layer activation ' + str(num_ls) + str(num_l) + str(width), ['relu', 'sigmoid', 'tanh', 'linear']))
 
 def layer_choice(num):
+  """ Given the number of layers, returns a choice of differing width and activations layers. """
   layer_neurons = []
   for i in range(num):
     # Choose number of neurons from 1 - 10.
@@ -20,6 +23,9 @@ def layer_choice(num):
   return layer_neurons
 
 def train(handle, train_epochs=10):
+  """ Runs TPE black box optimization of the neural network to use.
+  After evaluating all points, it saves the best model to disk and sets the status flag as TRAINED.
+  """
   from db import get_model, save_model
   from model import ModelStatus
   info('Running training on new process')

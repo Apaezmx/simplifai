@@ -137,12 +137,18 @@ def load_keras_model(handle):
   return model
 
 def delete_model(handle):
-  """ Deletes all models with the given handle if found. """
+  """ Deletes all models with the given handle if found. 
+  Returns: The number of models deleted.
+  """
   model_dir = config.ROOT_PATH + MODEL_PATH
+  num_models = 0
   for f in os.listdir(model_dir):
     if re.search(handle + ".*", f):
         os.remove(os.path.join(model_dir, f))
         config.get_mc().delete(handle)
+        num_models += 1
+        
+  return num_models
         
   
 def load_csvs(file_list):  

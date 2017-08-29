@@ -1,7 +1,9 @@
 import json
 import numpy as np
+from config import config
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 from keras.callbacks import ModelCheckpoint
+from keras import backend as K
 from keras.models import Sequential
 from keras.layers import Embedding, Dense, Activation, Merge, Flatten, Dropout
 from keras.layers.normalization import BatchNormalization
@@ -105,6 +107,9 @@ class Model():
         Params: hyperparameter dictionary.
       """
       print str(hp)
+      sess = tf.Session(config.tf_server.target)
+
+      K.set_session(sess)
       output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')]
       if not output_headers:
         raise ValueError('No outputs defined!')

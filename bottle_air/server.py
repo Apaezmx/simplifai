@@ -4,6 +4,7 @@ from api import resolve_endpoint
 from bottle import error, post, request, route, run, static_file, template, Bottle
 from config import config
 import os
+import tensorflow as tf
 
 app = bottle.Bottle()
 plugin = bottle.ext.memcache.MemcachePlugin(servers=['localhost:11211'])
@@ -48,4 +49,5 @@ parser = argparse.ArgumentParser(description='Running air server')
 parser.add_argument('--root_path', type=str, help='filepath to server root')
 args = parser.parse_args()
 
+config.tf_server = tf.train.Server.create_local_server()
 run(app, reloader=True, host='localhost', port=8012, server='cherrypy')

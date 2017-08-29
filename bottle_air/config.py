@@ -6,6 +6,7 @@ class Config():
   mc = {}  # Memchached object shared across threads.
   ROOT_PATH = os.path.dirname(os.path.realpath(__file__))  # Path to the project's directory.
   STATIC_PATH = os.path.dirname(os.path.realpath(__file__)) + '/static'  # Path to static resources.
+  tf_server = {}  # Tensorflow local Server.
   
   def set_mc(self, mc):
     self.mc = mc

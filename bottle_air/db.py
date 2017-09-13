@@ -162,7 +162,7 @@ def load_csvs(file_list):
   types = {}
   for f in file_list:
     if os.path.isfile(f):
-      with open(f, "r") as read_f:
+      with open(f, "rb") as read_f:
         reader = csv.reader(read_f)
         headers = []
         for row in reader:

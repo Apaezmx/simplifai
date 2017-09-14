@@ -91,7 +91,7 @@
                                 <th>Prediction</th>
                             </tr>
                             <tr>
-                                <td id="new-prediction"></td>
+                                <td id="new-prediction" hidden></td>
                             </tr>
                         </tbody>
                     </table>
@@ -164,6 +164,7 @@ function infer_types() {
             var text = document.createElement('input');
             text.type = 'text';
             text.placeholder = types[key];
+            text.name = key
             td1.innerHTML = key;
             td2.append(text);
             
@@ -193,6 +194,7 @@ function infer() {
           $('#results').show(250);
           var div = document.getElementById('new-prediction');
           div.innerHTML = JSON.stringify(response['result']).substring(JSON.stringify(response['result']).lastIndexOf("[")+1, JSON.stringify(response['result']).lastIndexOf("]"));
+          $('#new-prediction').show(250);
         }
   );
 }

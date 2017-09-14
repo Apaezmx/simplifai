@@ -47,7 +47,7 @@ def infer(args, files):
   Args: Model handle, input values.
   Returns: A JSON containing all the model predictions.
   """
-  clear_session()  # Clears TF graphs.
+  #clear_session()  # Clears TF graphs.
   try:
     model = get_model(args['handle'])
   except Exception as e:

@@ -127,7 +127,9 @@ class Model():
         lengths = [len(words) for words in word_list]
         lengths.sort()
         input_size = lengths[int(np.round(len(lengths) * 0.95))]
-        assert input_size > 0, 'input_size is 0.'
+        if input_size == 0:
+          print 'WARNING: input_size is 0 for ' + header
+          input_size = 1
         for idx, words in enumerate(word_list):
           # Strings to integers. Pad sequences with zeros so that all of them have the same size.
           word_list[idx] = pad_sequences([[dict_[word] for word in words]], 

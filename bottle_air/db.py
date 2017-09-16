@@ -5,6 +5,7 @@ import json
 import random
 import re
 import os
+import zlib
 from config import config
 from datetime import datetime
 from keras.models import load_model, model_from_json
@@ -13,6 +14,7 @@ from model import Model, ModelStatus
 MODEL_PATH = '/models'
 HANDLE_LENGTH = 10
 keras_cache = {}  # Local thread memory cache.
+COMPRESSION_LEVEL = 9
 
 def clear_thread_cache():
   keras_cache = {}
@@ -37,16 +39,18 @@ def new_model():
   model_path = config.ROOT_PATH + MODEL_PATH + '/' + filename
   model = Model(path=model_path)
   with open(model_path, 'w+') as f:
-    f.write(model.to_json())
-    config.get_mc().set(path2handle(model_path), model.to_json())
+    json = model.to_json()
+    f.write(json)
+    config.get_mc().set(path2handle(model_path), zlib.compress(json, COMPRESSION_LEVEL))
   
   return model
 
 def save_model(model):
   """ Saves the given model to disk. """
   with open(model.model_path, 'w+') as f:
-    f.write(model.to_json())
-    config.get_mc().set(path2handle(model.model_path), model.to_json())
+    json = model.to_json()
+    f.write(json)
+    config.get_mc().set(path2handle(model.model_path), zlib.compress(json, COMPRESSION_LEVEL))
 
 def get_model(handle):
   """ Fetches the model from memory or disk with a matching handle.
@@ -55,14 +59,14 @@ def get_model(handle):
   mem_try = config.get_mc().get(handle)
   if mem_try:
     m = Model()
-    m.from_json(mem_try)
+    m.from_json(zlib.decompress(mem_try))
     return m
   model_path = config.ROOT_PATH + MODEL_PATH + "/" + handle
   try:
     with open(model_path, "r") as f:
       model = Model()
       model.from_json(f.read())
-      config.get_mc().set(handle, model.to_json())
+      config.get_mc().set(handle, zlib.compress(model.to_json(), COMPRESSION_LEVEL))
     return model
   except:
     return None
@@ -162,7 +166,7 @@ def load_csvs(file_list):
   types = {}
   for f in file_list:
     if os.path.isfile(f):
-      with open(f, "rb") as read_f:
+      with open(f, "r") as read_f:
         reader = csv.reader(read_f)
         headers = []
         for row in reader:

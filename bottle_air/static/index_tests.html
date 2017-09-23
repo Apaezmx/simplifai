@@ -62,10 +62,31 @@
         </nav>
       
     <div class="jumbotron" id="index-jumbotron">
-        <div class="container">
-            <h1>Upload a .CSV to train your model!</h1>
-            <br/><br/>
+        
+        <div class='container' id='start-demo-container'>
+            <h1>Simple Predict</h1>
+            <div id='blue-box'>
+                <input type='button' id='start-demo-button' value="Click here to start the demo!" />
+            </div>
+        </div>
+        
+        <div class="container" id='upload-your-csv-container' hidden>
+            <h1>Simple Predict</h1>
             
+            <div class='steps'>
+            <div class='steps-left'></div>
+            <div class='steps-middle'></div>
+            <div class='steps-middle'></div>
+            <div class='steps-right'></div>
+            </div>
+            <div class='steps-text-div'>
+            <div class='steps-text'>UPLOAD</div>
+            <div class='steps-text'>DEFINE</div>
+            <div class='steps-text'>TRAIN</div>
+            <div class='steps-text'>INFER</div>
+            </div>
+            
+            <span class='instructions'>Start by uploading a .csv file. Please follow the format outlined <a href=''>here.</a></span>
             <form action="/api" id="uploader" method="post" enctype="multipart/form-data">
                 <div class="form-group has-success">
                         <input type="file" name="upload" class="form-control form-control-success" id="inputSuccess"/>
@@ -79,8 +100,10 @@
                 <input type="text" name="endpoint" value="upload_csv" hidden/>
                 
             </form>
+            <span class='instructions'><a href=''>Take a look here to see how to format and export your spreadsheet.</a></span>
             
             <div class="container" id="train-container" hidden>
+                <div id="types"></div>
                 <div class="input-group">
 
                     <button type="submit" value="Start Training" class="btn btn-primary btn-lg" id='btn_train' data-loading-text="<i class='fa fa-spinner fa-spin '></i> Please wait..." onclick="startTraining();">Start Training</button>
@@ -130,6 +153,12 @@
 
 <script type="text/javascript">
     
+/*Helper functions*/
+$('#start-demo-button').on('click', function() {
+    $('#start-demo-container').replaceWith($('#upload-your-csv-container'));
+    $('#upload-your-csv-container').show(250);
+});
+    
 $('#load').on('click', function() {
     var $this = $(this);
     $this.button('loading');
@@ -164,16 +193,12 @@ $('#uploader').submit(function(e) {
                 JSON.parse(response);
             } catch (e) {
                 alert(response);
-               /* document.getElementById('f1_upload_process').style.visibility = 'hidden';
-               */
                 return;
             }
             stopUpload(JSON.parse(response));
         },
         error : function(response) {
             alert(response);
-           /* document.getElementById('f1_upload_process').style.visibility = 'hidden';
-           */
         }
     });
 });
@@ -393,9 +418,6 @@ function doPoll(handle){
 
 
 function startUpload() {
-    
-   /* document.getElementById('f1_upload_process').style.visibility = 'visible';
-   */
     return true;
 }
     
@@ -419,10 +441,8 @@ function stopUpload(response){
           
          table.append(headers);
          table.append(row);
-         /*
          $('#types').empty()
          $('#types').append(table);
-         */
          model = response['handle'];
          $('#train-container').show(250);
       }
@@ -430,8 +450,6 @@ function stopUpload(response){
          document.getElementById('result').innerHTML = 
            '<span class="emsg">There was an error during file upload!<\/span><br/><br/>';
       }
-     /* document.getElementById('f1_upload_process').style.visibility = 'hidden';
-     */
       return true;   
 }
     

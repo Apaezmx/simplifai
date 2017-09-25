@@ -130,7 +130,6 @@
 </html>
 
 <script>
-var handle = '';
 window.onload = function() {
     var url_string = window.location.href;
     var url = new URL(url_string);
@@ -203,7 +202,7 @@ function infer() {
   });
   $.post('/api',
         {'endpoint': 'infer',
-         'handle': handle,
+         'handle': $('#text_model').val(),
          'values': JSON.stringify(values)},
         function(response) {
           response = JSON.parse(response);

@@ -32,20 +32,15 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
               </button>
-              <a class="navbar-brand" href="#">Minatini</a>
+              <a class="navbar-brand" href="#">SimplifAi</a>
             </div>
 
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
               <ul class="nav navbar-nav navbar-right">
+                <li><a href="http://localhost:8012/index.html">Train</a></li>
+                <li><a href="http://localhost:8012/infer.html">Infer</a></li>
                 <li><a href="#">About</a></li>
-                <li class="dropdown">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Services<span class="caret"></span></a>
-                  <ul class="dropdown-menu">
-                    <li><a href="index.html">Train a model</a></li>
-                    <li><a href="infer.html">Make predictions</a></li>
-                  </ul>
-                </li>
                 <li><a href="#">Contact</a></li>
               </ul>
             </div><!-- /.navbar-collapse -->
@@ -57,10 +52,10 @@
         
             <div id='all-steps-div-two'>
                 <div class='steps'>
-                    <div class='steps-left'></div>
-                    <div class='steps-middle'></div>
-                    <div class='steps-middle'></div>
-                    <div class='steps-right'></div>
+                    <div class='steps-upload'></div>
+                    <div class='steps-define'></div>
+                    <div class='steps-train'></div>
+                    <div class='steps-infer'></div>
                 </div>
                 <div class='steps-text-div'>
                     <div class='steps-text'>UPLOAD</div>
@@ -69,9 +64,10 @@
                     <div class='steps-text'>INFER</div>
                 </div>
             </div>
-            
+          
             <div class="container pseudo-form" id="container-retriever">
-            
+                <span class='instructions'>You can try out your trained model here.</span>
+                
                 <div class="form-group has-success">
 
                     <input type="text" class="form-control form-control-success" id='text_model' value="" style="text-align:center;"/>
@@ -84,22 +80,29 @@
                     <input type="submit" class="btn btn-primary btn-lg" id='btn_infer_types' value="Retrieve Model" onclick="infer_types();changeVisibility();">
 
                 </div>
+                <span class='instructions'><a href=''>See here for API requests.</a></span>
+                <br/>
+                <span class='instructions'><a href=''>You can now use your model in Google Spreadsheets.</a></span>
 
             </div><!-- pseudo-form -->
             
             <div class="container pseudo-form" id="container-predictions" hidden>
             
-                <table id="values"></table>
-                <input type="submit" class="btn btn-primary btn-lg" id='btn_infer' value="Submit" onclick="infer();" />
+                <div id='enter-values'>
+                    <span class='instructions'>Please fill in your model's input data.</span>
+                    <table id="values"></table>
+                    <input type="submit" class="btn btn-primary btn-lg" id='btn_infer' value="Run inference" onclick="infer();" />
+                </div>
                 
-                <div id="results" hidden>
+                <div id="results">
+                    <span class='instructions'>Here are your outputs</span>
                     <table>
                         <tbody>
                             <tr>
-                                <th>Prediction</th>
+                                <th id='infer-key'></th>
                             </tr>
                             <tr>
-                                <td id="new-prediction" hidden></td>
+                                <td id="new-prediction"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -130,11 +133,18 @@
 </html>
 
 <script>
+
+var model = ''
 window.onload = function() {
+    $('.steps-upload').css('backgroundColor', '#ffffff');
+    $('.steps-define').css('backgroundColor', '#ffffff');
+    $('.steps-train').css('backgroundColor', '#ffffff');
+    $('.steps-infer').css('backgroundColor', '#68a4f0');
     var url_string = window.location.href;
     var url = new URL(url_string);
     var parameter = url.searchParams.get('model');
     document.getElementById('text_model').defaultValue = parameter;
+    model = parameter;
     }
 
 function changeVisibility() {
@@ -173,6 +183,7 @@ function infer_types() {
           
           for (var key in types) {
             if (key.indexOf("output_") != -1) {
+              document.getElementById('infer-key').innerHTML = key;
               continue;
             }
             var tr = document.createElement('tr');
@@ -202,7 +213,7 @@ function infer() {
   });
   $.post('/api',
         {'endpoint': 'infer',
-         'handle': $('#text_model').val(),
+         'handle': model,
          'values': JSON.stringify(values)},
         function(response) {
           response = JSON.parse(response);

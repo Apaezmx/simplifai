@@ -48,14 +48,9 @@
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
               <ul class="nav navbar-nav navbar-right">
+                <li><a href="http://localhost:8012/index.html">Train</a></li>
+                <li><a href="http://localhost:8012/infer.html">Infer</a></li>
                 <li><a href="#">About</a></li>
-                <li class="dropdown">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Services<span class="caret"></span></a>
-                  <ul class="dropdown-menu">
-                    <li><a href="#">Train a model</a></li>
-                    <li><a href="infer.html">Make predictions</a></li>
-                  </ul>
-                </li>
                 <li><a href="#">Contact</a></li>
               </ul>
             </div><!-- /.navbar-collapse -->
@@ -68,10 +63,10 @@
         
         <div id='all-steps-div' hidden>
             <div class='steps'>
-                <div class='steps-left'></div>
-                <div class='steps-middle'></div>
-                <div class='steps-middle'></div>
-                <div class='steps-right'></div>
+                <div class='steps-upload'></div>
+                <div class='steps-define'></div>
+                <div class='steps-train'></div>
+                <div class='steps-infer'></div>
             </div>
             <div class='steps-text-div'>
                 <div class='steps-text'>UPLOAD</div>
@@ -129,12 +124,13 @@
       
     <!-- Graphs Div -->
     <div class='container' id='graph-container' hidden>
+        <br/>
         <div id='all-steps-div-two'>
             <div class='steps'>
-                <div class='steps-left'></div>
-                <div class='steps-middle'></div>
-                <div class='steps-middle'></div>
-                <div class='steps-right'></div>
+                <div class='steps-upload'></div>
+                <div class='steps-define'></div>
+                <div class='steps-train'></div>
+                <div class='steps-infer'></div>
             </div>
             <div class='steps-text-div'>
                 <div class='steps-text'>UPLOAD</div>
@@ -143,7 +139,7 @@
                 <div class='steps-text'>INFER</div>
             </div>
         </div>
-        
+      <span class='instructions'>You can see each model performance in these graphs.</span>
       <div id="graphs"></div>
     </div>
       
@@ -167,16 +163,25 @@ $('#start-demo-button').on('click', function() {
     $('#upload-your-csv-container').show(250);
     $('#title').hide(250);
     $('#all-steps-div').show(250);
+    $('.steps-upload').css('backgroundColor', '#68a4f0');
+    $('.steps-define').css('backgroundColor', '#ffffff');
+    $('.steps-train').css('backgroundColor', '#ffffff');
+    $('.steps-infer').css('backgroundColor', '#ffffff');
+    changeVisibility();
 });
 /*Replace upload your csv div with types and train div.*/
 function showTypes() {
     $('#upload-your-csv-container').replaceWith($('#types-container'));
     $('#types-container').show(250);
+    $('.steps-upload').css('backgroundColor', '#ffffff');
+    $('.steps-define').css('backgroundColor', '#68a4f0');
 }
 /*Replace types container with graphs.*/
 function showGraph() {
     $('#index-jumbotron').hide(250);
     $('#graph-container').show(250);
+    $('.steps-define').css('backgroundColor', '#ffffff');
+    $('.steps-train').css('backgroundColor', '#68a4f0');
 }
 /*Loading animation in button "Upload your csv"*/
 $('#load').on('click', function() {
@@ -192,7 +197,7 @@ $('#btn_train').on('click', function() {
     $this.button('loading');
     setTimeout(function() {
         $this.button('reset');
-    }, 20000);
+    }, 30000);
 });
 /*Scrolls the screen to focus on training graphs*/
 function goToGraph() {
@@ -210,6 +215,12 @@ function generateName(key) {
 /*Returns true when the upload of the csv has started.*/
 function startUpload() {
     return true;
+}
+/*Scrolls the window to focus the jumbotron.*/
+function changeVisibility() {
+    $('html, body').animate({
+        scrollTop: $("#index-jumbotron").offset().top
+    }, 500);
 }
     
 /*Core functions*/
@@ -322,7 +333,7 @@ function doPoll(handle){
               setTimeout(function(){doPoll(handle)},10000);
             } else {
               chart.focus();
-              var userConfirm = confirm('Training is done! Do you want to make some predictions?');
+              var userConfirm = confirm('Done!\n\nTraining has finished!\n\nClick Ok to run some inferences');
               if (userConfirm == true) {
                   window.location.href = "http://localhost:8012/infer.html?model="+model
               }
@@ -398,9 +409,9 @@ function generateChart(lossData, valLossData) {
                 }
             },
             color: {
-                pattern: ['#dc2c6a', '#bd3364', '#fb6b32', '#d7673b', '#22ac71', '#289466',
-                          '#89e22d', '#7cc235', '#7a364e', '#5a2e3d', '#8c543d', '#664335',
-                          '#2a6049', '#244637', '#5b7e37', '#465c2f']
+                pattern: ['#01af2f', '#067122', '#ba620b', '#693400', '#0a5f73', '#023541',
+                          '#eb1d02', '#971908', '#088b2b', '#004f15', '#eb7502', '#974f08',
+                          '#057791', '#084d5d', '#ba1f0b', '#690c00']
             },
             legend: {
                 show: false

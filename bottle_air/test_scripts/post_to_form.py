@@ -8,8 +8,11 @@ import selenium.webdriver.chrome.service as service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import os
 import csv
 import time
+
+os.environ["LANG"] = "en_US.UTF-8"
 
 """
 Path where the Selenium driver for your browser is saved.
@@ -28,28 +31,27 @@ INFER_URL = 'http://localhost:8012/infer.html'
 """
 Name of the model that you want to use to make inferences.
 """
-MODEL = 'e07c99276f'
+MODEL = 'e2fa262f55'
 """
 Path to the test csv file.
 """
-PATH_TO_TEST = 'hr_test.csv'
+PATH_TO_TEST = 'result1k.csv'
 """
 Name of the column that you want to predict and its type (int, float, or str).
 """
-KEY_TO_INFER = ['output_left', int]
+KEY_TO_INFER = ['output_Sales', int]
 """
 Names of the columns that are integers.
 """
-COLUMNS_INT = ['average_montly_hours', 'time_spend_company', 'Work_accident',
-               'promotion_last_5years']
+COLUMNS_INT = ['Promo2SinceYear', 'Promo2SinceWeek', 'Open', 'Promo', 'SchoolHoliday', 'CompetitionDistance', 'Promo2']
 """
 Names of columns that are floats.
 """
-COLUMNS_FLOAT = ['satisfaction_level', 'last_evaluation']
+COLUMNS_FLOAT = []
 """
 Names of the columns that are strings.
 """
-COLUMNS_STR = ['number_project', 'sales', 'salary']
+COLUMNS_STR = ['DayOfWeek', 'Store', 'Date', 'StoreType', 'Assortment', 'PromoInterval', 'StateHoliday', 'CompetitionOpenSinceMonth', 'CompetitionOpenSinceYear']
 """
 Path to save targets.
 """
@@ -75,7 +77,6 @@ def get_column_names(path_to_test, key_to_infer):
     path_to_test: Path where your test.csv is saved.
     key_to_infer: The name of the column that you want to infer.
     """
-    
     with open(path_to_test, 'r') as f:
         list_of_columns = f.readline()[:-1].split(',')
         list_of_columns.remove(key_to_infer[0])
@@ -134,9 +135,9 @@ def prepare_data(path_to_test, path_to_targets, key_to_infer, columns_int, colum
             new_dict = {}
             for key, value in row.items():
                 if key in columns_int:
-                    new_dict[key] = int(value)
+                    new_dict[key] = 0 if value == '' else int(value)
                 elif key in columns_float:
-                    new_dict[key] = float(value)
+                    new_dict[key] = 0.0 if value == '' else float(value)
                 else:
                     new_dict[key] = str(value)
             test_dict_ord.append(new_dict)
@@ -171,7 +172,7 @@ def do_inferences(driver, infer_url, path_to_preds, column_names, test_dict_ord)
     time1 = time.time()
     for row in test_dict_ord:
         
-        text_model = WebDriverWait(driver, 10).until(\
+        text_model = WebDriverWait(driver, 20).until(\
             EC.presence_of_element_located((By.ID, 'text_model')))
 
         text_model.clear()
@@ -179,9 +180,11 @@ def do_inferences(driver, infer_url, path_to_preds, column_names, test_dict_ord)
 
         infer_types = driver.find_element_by_id('btn_infer_types')
         infer_types.click()
-        
+        WebDriverWait(driver, 20).until(\
+                EC.visibility_of_element_located((By.ID, 'values')))
+
         for name in column_names:
-            _input = WebDriverWait(driver, 10).until(\
+            _input = WebDriverWait(driver, 20).until(\
                 EC.presence_of_element_located((By.NAME, name)))
             _input.clear()
             _input.send_keys(str(row[name]))
@@ -189,7 +192,7 @@ def do_inferences(driver, infer_url, path_to_preds, column_names, test_dict_ord)
         btn_infer = driver.find_element_by_id('btn_infer')
         btn_infer.click()
         
-        prediction_box = WebDriverWait(driver, 10).until(\
+        prediction_box = WebDriverWait(driver, 20).until(\
             EC.visibility_of_element_located((By.ID, 'new-prediction')))
         prediction = prediction_box.text
         predictions.append(prediction)

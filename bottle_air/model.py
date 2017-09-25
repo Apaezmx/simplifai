@@ -115,27 +115,28 @@ class Model():
         raise ValueError('No outputs defined!')
       
       # Process string features.
-      self.string_features = []
-      for header, typ in self.types.iteritems():
-        if typ != 'str':
-          continue
-        # Every string feature is treated as a list of words.
-        word_list = [x.split() for x in self.data[header]]
-        dict_, _ = self.process_text_feature(word_list)
-        assert len(dict_) > 0, 'Dict is empty.'
-        self.embedding_dicts[header] = dict_
-        lengths = [len(words) for words in word_list]
-        lengths.sort()
-        input_size = lengths[int(np.round(len(lengths) * 0.95))]
-        if input_size == 0:
-          print 'WARNING: input_size is 0 for ' + header
-          input_size = 1
-        for idx, words in enumerate(word_list):
-          # Strings to integers. Pad sequences with zeros so that all of them have the same size.
-          word_list[idx] = pad_sequences([[dict_[word] for word in words]], 
-                                         maxlen=input_size, padding='post', 
-                                         truncating='post')[0].tolist()
-        self.string_features.append((header, word_list))
+      if not self.string_features: 
+        self.string_features = []
+        for header, typ in self.types.iteritems():
+          if typ != 'str':
+            continue
+          # Every string feature is treated as a list of words.
+          word_list = [x.split() for x in self.data[header]]
+          dict_, _ = self.process_text_feature(word_list)
+          assert len(dict_) > 0, 'Dict is empty.'
+          self.embedding_dicts[header] = dict_
+          lengths = [len(words) for words in word_list]
+          lengths.sort()
+          input_size = lengths[int(np.round(len(lengths) * 0.95))]
+          if input_size == 0:
+            print 'WARNING: input_size is 0 for ' + header
+            input_size = 1
+          for idx, words in enumerate(word_list):
+            # Strings to integers. Pad sequences with zeros so that all of them have the same size.
+            word_list[idx] = pad_sequences([[dict_[word] for word in words]], 
+                                           maxlen=input_size, padding='post', 
+                                           truncating='post')[0].tolist()
+          self.string_features.append((header, word_list))
       
       # Build models.
       # Merge all inputs into one model.
@@ -202,9 +203,9 @@ class Model():
       model.compile(loss='mse',
             optimizer=optimizer,
             metrics=['accuracy'])
-      nb_epoch = 20
+      nb_epoch = 40
       if persist:
-        nb_epoch = 500
+        nb_epoch = 200
       
       model_name = str(hp).replace('{', '').replace('}', '')
       if persist:
@@ -301,7 +302,7 @@ class Model():
   def intergerize_string(self, data):
     """ Transforms all string features into integer arrays. """
     # Process string features.
-    string_features = []
+    string_features_dict = {}
     for header, column in data.iteritems():
       if self.types[header] != 'str':
         continue
@@ -313,15 +314,17 @@ class Model():
         if header == tup[0]:
           input_size = len(tup[1][0])
           break
+      assert input_size, 'Input size for ' + header + ' could not be determined.'
       dict_ = self.embedding_dicts[header]
       for idx, words in enumerate(word_list):
         # Strings to integers. Pad sequences with zeros so that all of them have the same size.
         word_list[idx] = pad_sequences([[dict_.get(word, 0) for word in words]], 
                                        maxlen=input_size, padding='post', 
                                        truncating='post')[0].tolist()
-      string_features.append((header, word_list))
+
+      string_features_dict[header]= (header, word_list)
     
-    return string_features
+    return [string_features_dict[tup[0]] for tup in self.string_features]
         
 
   def infer(self, values):

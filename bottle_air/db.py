@@ -60,7 +60,8 @@ def get_model(handle):
   if mem_try:
     m = Model()
     m.from_json(zlib.decompress(mem_try))
-    return m
+    if m.data:
+      return m
   model_path = config.ROOT_PATH + MODEL_PATH + "/" + handle
   try:
     with open(model_path, "r") as f:
@@ -68,7 +69,8 @@ def get_model(handle):
       model.from_json(f.read())
       config.get_mc().set(handle, zlib.compress(model.to_json(), COMPRESSION_LEVEL))
     return model
-  except:
+  except Exception as e:
+    print "ERROR: Could not load " + handle + " model." + str(e)
     return None
   
 def parse_val(value):
@@ -180,6 +182,7 @@ def load_csvs(file_list):
             if not output_headers:
               return 'No outputs defined in CSV. Please define columns as outputs by preppending \'output_\'.', ''
           else:  # If not first row, parse values assuming the headers dictionary has been already filled.
+            assert len(row) == len(headers), 'Uneven rows and headers at row ' + str(row) + ' with headers ' + str(headers)
             for idx, value in enumerate(row):
               val, typ = parse_val(value)
               data[headers[idx]].append(val)

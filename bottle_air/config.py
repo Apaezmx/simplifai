@@ -1,5 +1,7 @@
 import os
 
+ENABLE_MEMCACHE = False
+
 class Config():
   """ Static global class holding important parameters.
   """
@@ -12,7 +14,15 @@ class Config():
     self.mc = mc
 
   def get_mc(self):
-    return self.mc
+    if self.mc and ENABLE_MEMCACHE:
+      return self.mc
+    return DummyMc()
+
+class DummyMc():
+  def set(self, a, b):
+    return None
+  def get(self, a):
+    return None
 
 global config
 config = Config()  # Singleton class object to be used across the project.

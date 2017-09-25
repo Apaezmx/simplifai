@@ -130,7 +130,7 @@
 </html>
 
 <script>
-
+var handle = '';
 window.onload = function() {
     var url_string = window.location.href;
     var url = new URL(url_string);
@@ -154,6 +154,7 @@ function infer_types() {
         {'endpoint': 'infer_types',
          'handle': $('#text_model').val()},
         function(response) {
+          handle = $('#text_model').val();
           response = JSON.parse(response);
           if (response["status"] != "OK") {
             alert(JSON.stringify(response));
@@ -202,7 +203,7 @@ function infer() {
   });
   $.post('/api',
         {'endpoint': 'infer',
-         'handle': $('#text_model').val(),
+         'handle': handle,
          'values': JSON.stringify(values)},
         function(response) {
           response = JSON.parse(response);

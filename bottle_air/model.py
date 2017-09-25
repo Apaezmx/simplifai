@@ -283,7 +283,7 @@ class Model():
   def start_training(self):
     """ Kicks off the black box optmization algorithm. """
     print 'Starting process'
-    train(self.get_handle())
+    train(self)
     
   def normalize_float(self, val, header, reverse=False):
     """ Normalizes value using the normalization boundaries from norms.

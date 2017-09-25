@@ -68,7 +68,7 @@ def get_model(handle):
       model = Model()
       model.from_json(f.read())
       config.get_mc().set(handle, zlib.compress(model.to_json(), COMPRESSION_LEVEL))
-    return model
+      return model
   except Exception as e:
     print "ERROR: Could not load " + handle + " model." + str(e)
     return None

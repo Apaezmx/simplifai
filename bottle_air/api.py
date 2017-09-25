@@ -51,7 +51,7 @@ def infer(args, files):
   try:
     model = get_model(args['handle'])
   except Exception as e:
-    return json.dumps({'status': 'ERROR', 'why': 'Model probably not found ' + str(e)})
+      return json.dumps({'status': 'ERROR', 'why': 'Infer: Model probably not found ' + str(e)})
     
   if 'values' not in args:
     return json.dumps({'status': 'ERROR', 'why': 'No values specified'})

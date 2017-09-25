@@ -55,12 +55,20 @@
     <div class="jumbotron" id="infer-jumbotron">
         <div class="container">
         
-            <h1 id="predictions-title">Make some predictions!</h1>
-            <br/>
-
-            <!--
-            <p>Infer which model?</p>
-            -->
+            <div id='all-steps-div-two'>
+                <div class='steps'>
+                    <div class='steps-left'></div>
+                    <div class='steps-middle'></div>
+                    <div class='steps-middle'></div>
+                    <div class='steps-right'></div>
+                </div>
+                <div class='steps-text-div'>
+                    <div class='steps-text'>UPLOAD</div>
+                    <div class='steps-text'>DEFINE</div>
+                    <div class='steps-text'>TRAIN</div>
+                    <div class='steps-text'>INFER</div>
+                </div>
+            </div>
             
             <div class="container pseudo-form" id="container-retriever">
             
@@ -123,12 +131,22 @@
 
 <script>
 
-window.onload = document.getElementById("text_model").defaultValue = localStorage.getItem("storageName");
+window.onload = function() {
+    var url_string = window.location.href;
+    var url = new URL(url_string);
+    var parameter = url.searchParams.get('model');
+    document.getElementById('text_model').defaultValue = parameter;
+    }
 
 function changeVisibility() {
     $('html, body').animate({
         scrollTop: $("#infer-jumbotron").offset().top
     }, 500);
+}
+/*Replace retrieve div with infer div*/
+function showInfer() {
+    $('#container-retriever').replaceWith($('#container-predictions'));
+    $('#container-predictions').show(250);
 }
 
 function infer_types() {
@@ -172,7 +190,7 @@ function infer_types() {
             tr.append(td2);
             table.append(tr);
           }
-          $('#container-predictions').show(250);
+          showInfer();
            document.getElementById('uploadedSuccessfully').innerHTML = 'Make a prediction!';
         }
   );

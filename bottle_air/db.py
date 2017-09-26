@@ -64,7 +64,7 @@ def get_model(handle):
     if m.data:
       return m
   model_path = config.ROOT_PATH + MODEL_PATH + "/" + handle
-  retries = 1
+  retries = 5
   while retries:
     try:
       with open(model_path, "r") as f:

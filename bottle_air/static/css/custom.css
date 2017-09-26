@@ -70,6 +70,7 @@ body {
     background-color: #d2efff;
     opacity: 0.8;   
     box-shadow: 5px 5px 5px 5px #a5a2a2;
+    border-radius: 10px;
 }
 #start-demo-button {
     position: relative;
@@ -213,6 +214,24 @@ body {
 #all-steps-div-two {
     margin: 10px auto 30px auto;
 }
+#progress-bar {
+    position: relative;
+    margin: 30px auto 0 auto;
+}
+#total-progress {
+    width: 510px;
+    background-color: #e1f5fe;
+    border: 2px solid black;
+    border-radius: 8px;
+    position: relative;
+    margin: 0 auto;
+}
+#current-progress {
+    height: 20px;
+    width: 1px;
+    background-color: #68a4f0;
+    border-radius: 6px;
+}
 #graphs {
     border: 2px solid black;
     height: 400px;
@@ -221,6 +240,7 @@ body {
     margin: 0 auto 0 auto;
     background-color: #ffffff;
     opacity: 0.8;
+    border-radius: 10px;
 }
 .c3-lines {
     stroke-width: 3px;

@@ -50,8 +50,8 @@
               <ul class="nav navbar-nav navbar-right">
                 <li><a href="http://localhost:8012/index.html">Train</a></li>
                 <li><a href="http://localhost:8012/infer.html">Infer</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#">Contact</a></li>
+                <li><a href="http://www.simplifai.mx/feature-coming-soon/" target='_blank'>About</a></li>
+                <li><a href="http://www.simplifai.mx/feature-coming-soon/" target='_blank'>Contact</a></li>
               </ul>
             </div><!-- /.navbar-collapse -->
           </div><!-- /.container-fluid -->
@@ -86,7 +86,7 @@
         <!-- Upload your csv container -->
         <div class="container" id='upload-your-csv-container' hidden>            
             
-            <span class='instructions'>Start by uploading a .csv file. Please follow the format outlined <a href=''>here.</a></span>
+            <span class='instructions'>Start by uploading a .csv file. Please follow the format outlined <a href="http://www.simplifai.mx/feature-coming-soon/" target='_blank'>here.</a></span>
             <form action="/api" id="uploader" method="post" enctype="multipart/form-data">
                 <div class="form-group has-success">
                         <input type="file" name="upload" class="form-control form-control-success" id="inputSuccess"/>
@@ -100,11 +100,11 @@
                 <input type="text" name="endpoint" value="upload_csv" hidden/>
                 
             </form>
-            <span class='instructions'><a href=''>Take a look here to see how to format and export your spreadsheet.</a></span>
+            <span class='instructions'><a href="http://www.simplifai.mx/feature-coming-soon/" target='_blank'>Take a look here to see how to format and export your spreadsheet.</a></span>
             
             <!-- Types and train container -->
             <div class="container" id="types-container" hidden>
-                <span class='instructions'>This are the columns and types we detected from the file you uploaded.</span>
+                <span class='instructions'>These are the columns and types we detected from the file you uploaded.</span>
                 <div id="types"></div>
                 
                 <div class="input-group">
@@ -140,6 +140,12 @@
             </div>
         </div>
       <span class='instructions'>You can see each model performance in these graphs.</span>
+      <div id='progress-bar'>
+        <span class='instructions' id='progress-text'>Tried 1 model so far, 19 remaining.</span>
+        <div id='total-progress'>
+            <div id='current-progress'></div> 
+        </div>
+      </div>
       <div id="graphs"></div>
     </div>
       
@@ -343,10 +349,28 @@ function doPoll(handle){
 
 /*Graphs*/
     
+/*Calls function createGraphs(response).*/
+function updateGraphs(response) {
+    createGraphs(response);
+}
+/*Update progress bar*/
+function updateBar(counter) {
+    if (counter < 20) {
+        var percentage = counter/20*100;
+        var newPixels = percentage*510/100;
+        var missingModels = 20-counter;
+        $('#current-progress').css('width', newPixels);
+        document.getElementById('progress-text').innerHTML = "Tried "+counter.toString()+" models so far, "+missingModels.toString()+" remaining.";
+    } else {
+        document.getElementById('progress-text').innerHTML = "Comparing models' performance. Please wait...";
+    }
+}
 /*Receives a JSON response, grabs the data in val_losses and organizes the data to generate the graphs. Calls functions generateName(), generateChart(), and hideData().*/
-var drawnData = []
+var drawnData = [];
 function createGraphs(response) {
+  var modelCounter = 0;
   for (var key in response['val_losses']) {
+    modelCounter++;
     if ( $.inArray(key, drawnData) == -1 ) {
         var valLoss = response["val_losses"][key]["val_loss"];
         var loss = response["val_losses"][key]["loss"];
@@ -382,6 +406,7 @@ function createGraphs(response) {
         }
     }
   }
+  updateBar(modelCounter);
 }   
 /*Generates the chart for the graph when the training starts. Appends data points to the graph throughout the training process. Calls functions addPoints() and goToGraph().*/
 var chart;
@@ -446,7 +471,6 @@ function generateChart(lossData, valLossData) {
             y:dimensionsY / dimensionsX + 0.2
         });
     }
-    
 }
 /*Adds the new points to the graph.*/
 function addPoints(data1, data2) {
@@ -493,11 +517,6 @@ function hideData() {
             clearInterval(interval);
         }
     }, 250);
-    
-}
-/*Calls function createGraphs(response).*/
-function updateGraphs(response) {
-    createGraphs(response);
 }
     
 </script> 

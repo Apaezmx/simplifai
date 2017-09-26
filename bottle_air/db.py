@@ -59,19 +59,23 @@ def get_model(handle):
   mem_try = config.get_mc().get(handle)
   if mem_try:
     m = Model()
+    print "From mc"
     m.from_json(zlib.decompress(mem_try))
     if m.data:
       return m
   model_path = config.ROOT_PATH + MODEL_PATH + "/" + handle
-  try:
-    with open(model_path, "r") as f:
-      model = Model()
-      model.from_json(f.read())
-      config.get_mc().set(handle, zlib.compress(model.to_json(), COMPRESSION_LEVEL))
-      return model
-  except Exception as e:
-    print "ERROR: Could not load " + handle + " model." + str(e)
-    return None
+  retries = 1
+  while retries:
+    try:
+      with open(model_path, "r") as f:
+        model = Model()
+        model.from_json(f.read())
+        config.get_mc().set(handle, zlib.compress(model.to_json(), COMPRESSION_LEVEL))
+        return model
+    except Exception as e:
+      print "ERROR: Could not load " + handle + " model." + str(e)
+    retries -= 1
+  return None
   
 def parse_val(value):
   """ Infers the type of the value by trying to parse it to different formats.

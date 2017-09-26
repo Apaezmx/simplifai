@@ -42,7 +42,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
               </button>
-              <a class="navbar-brand" href="#">SimplifAi</a>
+              <a class="navbar-brand" href="http://www.simplifai.mx/" target="_blank">SimplifAi</a>
             </div>
 
             <!-- Collect the nav links, forms, and other content for toggling -->
@@ -50,8 +50,8 @@
               <ul class="nav navbar-nav navbar-right">
                 <li><a href="http://localhost:8012/index.html">Train</a></li>
                 <li><a href="http://localhost:8012/infer.html">Infer</a></li>
-                <li><a href="http://www.simplifai.mx/feature-coming-soon/" target='_blank'>About</a></li>
-                <li><a href="http://www.simplifai.mx/feature-coming-soon/" target='_blank'>Contact</a></li>
+                <li><a href="http://www.simplifai.mx/simple-predict/" target='_blank'>About</a></li>
+                <li><a href="http://www.simplifai.mx/contact/" target='_blank'>Contact</a></li>
               </ul>
             </div><!-- /.navbar-collapse -->
           </div><!-- /.container-fluid -->
@@ -81,12 +81,19 @@
             <div id='blue-box'>
                 <input type='button' id='start-demo-button' value="Click here to start the demo!" />
             </div>
+            <span class='instructions'><strong>You can download test files here to try the demo!</strong></span>
+            <br/><br/>
+            <span class='instructions'><a href='test_files/hr_train.csv' download='hr_train.csv'><strong>Employees' satisfaction database.</strong></a></span><br/>
+            <span class='instructions'>Predict the probability of one of your employees resigning soon.</span>
+            <br/><br/>
+            <span class='instructions'><a href='test_files/langs.csv' download='langs/csv'><strong>Sentences in Spanish, English and French</strong></a></span><br/>
+            <span class='instructions'>Predict the language of a sentence that you create.</span>
         </div>
         
         <!-- Upload your csv container -->
         <div class="container" id='upload-your-csv-container' hidden>            
             
-            <span class='instructions'>Start by uploading a .csv file. Please follow the format outlined <a href="http://www.simplifai.mx/feature-coming-soon/" target='_blank'>here.</a></span>
+            <span class='instructions'>Start by uploading a .csv file. Please follow the format outlined <a href="test_files/hr_train.csv" target='_blank'>here.</a></span>
             <form action="/api" id="uploader" method="post" enctype="multipart/form-data">
                 <div class="form-group has-success">
                         <input type="file" name="upload" class="form-control form-control-success" id="inputSuccess"/>
@@ -418,7 +425,7 @@ function generateChart(lossData, valLossData) {
         chart = c3.generate({
             bindto: '#graphs',
             size: {
-                height: 400,
+                height: 380,
                 width: 500
             },
             data: {

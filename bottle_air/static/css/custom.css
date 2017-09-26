@@ -64,7 +64,7 @@ body {
 /*startDemo*/
 #blue-box {
     position: relative;
-    margin: 0 auto;
+    margin: 0 auto 25px auto;
     width: 500px;
     height: 250px;
     background-color: #d2efff;
@@ -212,11 +212,11 @@ body {
     width: 100vw;
 }
 #all-steps-div-two {
-    margin: 10px auto 30px auto;
+    margin: 10px auto 15px auto;
 }
 #progress-bar {
     position: relative;
-    margin: 30px auto 0 auto;
+    margin: 20px auto 0 auto;
 }
 #total-progress {
     width: 510px;
@@ -234,7 +234,7 @@ body {
 }
 #graphs {
     border: 2px solid black;
-    height: 400px;
+    height: 380px;
     width: 510px;
     position: relative;
     margin: 0 auto 0 auto;

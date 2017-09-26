@@ -32,7 +32,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
               </button>
-              <a class="navbar-brand" href="#">SimplifAi</a>
+              <a class="navbar-brand" href="http://www.simplifai.mx/" target="_blank">SimplifAi</a>
             </div>
 
             <!-- Collect the nav links, forms, and other content for toggling -->
@@ -40,8 +40,8 @@
               <ul class="nav navbar-nav navbar-right">
                 <li><a href="http://localhost:8012/index.html">Train</a></li>
                 <li><a href="http://localhost:8012/infer.html">Infer</a></li>
-                <li><a href="http://www.simplifai.mx/feature-coming-soon/" target='_blank'>About</a></li>
-                <li><a href="http://www.simplifai.mx/feature-coming-soon/" target='_blank'>Contact</a></li>
+                <li><a href="http://www.simplifai.mx/simple-predict/" target='_blank'>About</a></li>
+                <li><a href="http://www.simplifai.mx/contact/" target='_blank'>Contact</a></li>
               </ul>
             </div><!-- /.navbar-collapse -->
           </div><!-- /.container-fluid -->
@@ -133,7 +133,10 @@
 </html>
 
 <script>
+    
+/*Helper Functions*/
 
+/*Changes color of Steps Divs, gets the model name from the url and saves it.*/
 var model = ''
 window.onload = function() {
     $('.steps-upload').css('backgroundColor', '#ffffff');
@@ -146,7 +149,7 @@ window.onload = function() {
     document.getElementById('text_model').defaultValue = parameter;
     model = parameter;
     }
-
+/*Scrolls down the visibility when the Retrieve button is pressed.*/
 function changeVisibility() {
     $('html, body').animate({
         scrollTop: $("#infer-jumbotron").offset().top
@@ -158,6 +161,9 @@ function showInfer() {
     $('#container-predictions').show(250);
 }
 
+/*Core Functions*/
+    
+/*Creates the form where the user enters the data from which he/she wants to get a prediction.*/
 function infer_types() {
   $.post('/api',
         {'endpoint': 'infer_types',
@@ -205,6 +211,7 @@ function infer_types() {
         }
   );
 }
+/*Sends the form data to api.py and receives the prediction.*/
 function infer() {
   var values = {};
   $('#values #second_row').each(function(){
@@ -219,10 +226,8 @@ function infer() {
           if (response['status'] != 'OK') {
             alert(JSON.stringify(response));
           }
-          $('#results').show(250);
           var div = document.getElementById('new-prediction');
           div.innerHTML = JSON.stringify(response['result']).substring(JSON.stringify(response['result']).lastIndexOf("[")+1, JSON.stringify(response['result']).lastIndexOf("]"));
-          $('#new-prediction').show(250);
         }
   );
 }

@@ -1,7 +1,7 @@
 import json
 import math
 import os
-from db import get_model, new_model, save_model, delete_model, clear_thread_cache
+from db import get_model, new_model, save_model, delete_model, clear_thread_cache, list_models
 from keras.backend.tensorflow_backend import clear_session
 from model import ModelStatus
 
@@ -28,6 +28,16 @@ def handleNaN(val):
   if math.isnan(val):
     return 0
   return val
+  
+@endpoint
+def infer_models(args, files):
+  """ Returns all model handles which are available for inference.
+  Returns: a JSON list containing all handles.
+  """
+  models = list_models()
+  retval = {model.get_handle(): ", ".join(set(model.train_files)).replace("/tmp/", "") for model in models }
+  return json.dumps({'status': 'OK', 'handles': retval}) 
+  
   
 @endpoint
 def infer_types(args, files):

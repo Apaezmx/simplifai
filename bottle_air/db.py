@@ -26,6 +26,23 @@ def handle2path(handle):
 def path2handle(path):
   """ Translates a full path to a handle. """
   return path.split('/')[-1]
+  
+def list_models(ONLY_TRAINED=1):
+  """ Lists all current models."""
+  models = []
+  
+  model_dir = config.ROOT_PATH + MODEL_PATH
+  
+  for name in os.listdir(model_dir):
+    if "_" not in name:
+      with open(model_dir + '/' + name, 'r') as f:
+        model = Model()
+        model.from_json(f.read())
+        if ONLY_TRAINED and model.status != ModelStatus.TRAINED:
+          continue
+        models.append(model)
+
+  return models
 
 def new_model():
   """ Construcs an empty Model assiging it a new random hex ID and persiting it to disk. 

@@ -160,6 +160,10 @@ function showInfer() {
     $('#container-retriever').replaceWith($('#container-predictions'));
     $('#container-predictions').show(250);
 }
+function showRetrieve() {
+    $('#container-predictions').replaceWith($('#container-retriever'));
+    $('#continer-retriever').show(250);
+}
 
 /*Core Functions*/
     
@@ -225,6 +229,9 @@ function infer() {
           response = JSON.parse(response);
           if (response['status'] != 'OK') {
             alert(JSON.stringify(response));
+            showRetrieve();
+            document.getElementById('text_model').defaultValue = model;
+            alert('There was an error! Retrieve your model again, please!');
           }
           var div = document.getElementById('new-prediction');
           div.innerHTML = JSON.stringify(response['result']).substring(JSON.stringify(response['result']).lastIndexOf("[")+1, JSON.stringify(response['result']).lastIndexOf("]"));

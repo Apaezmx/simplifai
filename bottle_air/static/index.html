@@ -108,6 +108,7 @@
                 
             </form>
             <span class='instructions'><a href="http://www.simplifai.mx/feature-coming-soon/" target='_blank'>Take a look here to see how to format and export your spreadsheet.</a></span>
+            <br/><br/>
             <span class='instructions'><strong>You can also download test files here to try the demo!</strong></span>
             <br/><br/>
             <span class='instructions'><a href='test_files/hr_train.csv' download='hr_train.csv'><strong>Employees' satisfaction database.</strong></a></span><br/>
@@ -161,6 +162,7 @@
         </div>
       </div>
       <div id="graphs"></div>
+      <a id='goToInfer' href='' target='_blank'></a>
     </div>
       
     <!-- Footer -->
@@ -353,10 +355,12 @@ function doPoll(handle){
               setTimeout(function(){doPoll(handle)},10000);
             } else {
               chart.focus();
-              var userConfirm = confirm('Done!\n\nTraining has finished!\n\nClick Ok to run some inferences');
+              $('#goToInfer').attr('href', "http://www.simplifai.mx:8012/infer.html?model="+model);
+              document.getElementById('goToInfer').click();
+              /*var userConfirm = confirm('Done!\n\nTraining has finished!\n\nClick Ok to run some inferences');
               if (userConfirm == true) {
                   window.location.href = "http://www.simplifai.mx:8012/infer.html?model="+model
-              }
+              }*/
             }
     });
 }

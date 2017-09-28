@@ -48,12 +48,12 @@ body {
 #index-jumbotron {
     background-image: url(../images/WebsiteMockups_02.jpg);
     background-size: 100%;
-    height: 100vh;
+    min-height: 100vh;
 }
 #infer-jumbotron {
     background-image: url(../images/WebsiteMockups_02.jpg);
     background-size: 100%;
-    height: 100vh;
+    min-height: 100vh;
 }
 #index-jumbotron h1 {
     text-shadow: -2px 0 white, 0 2px white, 2px 0 white, 0 -2px white;
@@ -212,7 +212,7 @@ body {
     width: 100vw;
 }
 #all-steps-div-two {
-    margin: 10px auto 15px auto;
+    margin: 10px auto 10px auto;
 }
 #progress-bar {
     position: relative;

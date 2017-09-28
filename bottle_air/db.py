@@ -58,6 +58,7 @@ def new_model():
   with open(model_path, 'w+') as f:
     json = model.to_json()
     f.write(json)
+    f.close()
     config.get_mc().set(path2handle(model_path), zlib.compress(json, COMPRESSION_LEVEL))
   
   return model
@@ -67,6 +68,7 @@ def save_model(model):
   with open(model.model_path, 'w+') as f:
     json = model.to_json()
     f.write(json)
+    f.close()
     config.get_mc().set(path2handle(model.model_path), zlib.compress(json, COMPRESSION_LEVEL))
 
 def get_model(handle):

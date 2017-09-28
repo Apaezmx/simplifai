@@ -158,7 +158,7 @@ def load_keras_model(handle):
   """ Loads a keras model from cache or disk.
   Returns: The keras model instance.
   """
-  if handle in keras_cache:
+  if False and handle in keras_cache:
     print 'From thread cache'
     return keras_cache[handle]
   model = _load_keras_model(handle)

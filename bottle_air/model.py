@@ -203,7 +203,7 @@ class Model():
       model.compile(loss='mse',
             optimizer=optimizer,
             metrics=['accuracy'])
-      nb_epoch = 40
+      nb_epoch = 20
       if persist:
         nb_epoch = 200
       

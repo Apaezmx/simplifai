@@ -127,6 +127,7 @@ def upload_csv(args, files):
   save_path = "/tmp/{name}".format(name=upload.filename)
   if not os.path.isfile(save_path):
     upload.save(save_path)
+
   model = new_model()
   res = model.add_train_file(save_path)
   if res:

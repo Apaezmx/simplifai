@@ -20,11 +20,10 @@ def error404(error):
 @app.post('/api')
 def serve_api(mc):
   config.set_mc(mc)
-  print 'Serving '
   for k, v in request.forms.iteritems():
-    print str(k) + ':' + str(v)
+    print 'Form ' + str(k) + ':' + str(v)
   for k, v in request.files.iteritems():
-    print str(k) + ':' + str(v)
+    print 'File ' + str(k) + ':' + str(v)
   endpoint = request.forms.get('endpoint')
   if not endpoint:
     return 'Endpoint not found'

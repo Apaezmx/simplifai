@@ -26,37 +26,37 @@ class ModelStatus():
   TRAINED = 3
     
 class Model():
-  # Complete path where this Model is saved. It mainly contains metadata. Keras models are store elsewhere.
-  model_path = ''
-  
-  # All files which contain the train data for this Model.
-  train_files = []
-  
-  # Model status on the pipeline.
-  status = ModelStatus.NULL
-  
-  # FeatureName keyed dict which contains strings with the types for each feature.
-  types = {}
-  
-  # FeatureName keyed dict which contains lists with all features.
-  data = {}
-  
-  # Normalization max and min values for numeric inputs.
-  norms = {}
-  
-  # List of tuples containing (string_header, string_column).
-  string_features = []
-  
-  # FeatureName keyed dict for string feature containing the dictionary word->count.
-  embedding_dicts = {}
-  
-  # Keras models history.
-  val_losses = {}
-  
-  # Best model params.
-  best_model = ''
-
   def __init__(self, path=''):
+    # Complete path where this Model is saved. It mainly contains metadata. Keras models are store elsewhere.
+    self.model_path = ''
+    
+    # All files which contain the train data for this Model.
+    self.train_files = []
+    
+    # Model status on the pipeline.
+    self.status = ModelStatus.NULL
+    
+    # FeatureName keyed dict which contains strings with the types for each feature.
+    self.types = {}
+    
+    # FeatureName keyed dict which contains lists with all features.
+    self.data = {}
+    
+    # Normalization max and min values for numeric inputs.
+    self.norms = {}
+    
+    # List of tuples containing (string_header, string_column).
+    self.string_features = []
+    
+    # FeatureName keyed dict for string feature containing the dictionary word->count.
+    self.embedding_dicts = {}
+    
+    # Keras models history.
+    self.val_losses = {}
+    
+    # Best model params.
+    self.best_model = ''
+
     self.model_path = path
     self.status = ModelStatus.CREATED
     

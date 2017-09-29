@@ -6,7 +6,6 @@ from keras.callbacks import ModelCheckpoint
 from keras import backend as K
 from keras.models import Sequential
 from keras.layers import Embedding, Dense, Activation, Merge, Flatten, Dropout
-from keras.layers.normalization import BatchNormalization
 from keras.optimizers import *
 from keras.preprocessing.sequence import pad_sequences
 from keras_utils import single_activation
@@ -107,9 +106,6 @@ class Model():
         Params: hyperparameter dictionary.
       """
       print str(hp)
-      sess = tf.Session(config.tf_server.target)
-
-      K.set_session(sess)
       output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')]
       if not output_headers:
         raise ValueError('No outputs defined!')
@@ -127,7 +123,7 @@ class Model():
           self.embedding_dicts[header] = dict_
           lengths = [len(words) for words in word_list]
           lengths.sort()
-          input_size = lengths[int(np.round(len(lengths) * 0.95))]
+          input_size = lengths[int(np.round((len(lengths)-1) * 0.95))]
           if input_size == 0:
             print 'WARNING: input_size is 0 for ' + header
             input_size = 1
@@ -143,22 +139,23 @@ class Model():
       def init_model(self):
         feature_models = []
         total_input_size = 0
+        i = 0
         for tup in self.string_features:
           header = tup[0]
           word_list = tup[1]
           sequence_length = len(word_list[0])
           embedding_size = int(np.round(np.log10(len(self.embedding_dicts[header]))))
           embedding_size = embedding_size if embedding_size > 0 else 1
-          model = Sequential()
-          model.add(Embedding(len(self.embedding_dicts[header].keys()), embedding_size, input_length=sequence_length))
-          model.add(Flatten())
+          model = Sequential(name='str_model_' + str(len(feature_models)))
+          model.add(Embedding(len(self.embedding_dicts[header].keys()), embedding_size, input_length=sequence_length, name='embedding_model_' + str(len(feature_models))))
+          model.add(Flatten(name='flatten_model_' + str(len(feature_models))))
           total_input_size += embedding_size * len(word_list[0])
           feature_models.append(model)
         
         numeric_inputs = len(self.data) - len(self.string_features) - len(output_headers)
         if numeric_inputs:
-          num_model = Sequential()
-          num_model.add(Dense(numeric_inputs, input_shape=(numeric_inputs,)))
+          num_model = Sequential(name='num_model_' + str(len(feature_models)))
+          num_model.add(Dense(numeric_inputs, input_shape=(numeric_inputs,), name='dense_model_' + str(len(feature_models))))
           total_input_size += numeric_inputs
           feature_models.append(num_model)
         
@@ -185,27 +182,25 @@ class Model():
         layer_activation = layers[1][i][1][1]
         layer_width = layers[1][i][1][0]
         if i == 0 and depth != 1:
-          model.add(Dense(layer_width, input_shape=(input_size,)))
-          model.add(BatchNormalization())
+          model.add(Dense(layer_width, input_shape=(input_size,), name='layer_model_' + str(i)))
           model.add(Activation(layer_activation))
           model.add(Dropout(dropout))
         elif i == depth - 1:
-          model.add(Dense(len(output_headers), input_shape=(len(layers[1][i-1][1]),)))
+          model.add(Dense(len(output_headers), input_shape=(len(layers[1][i-1][1]),), name='layer_model_' + str(i)))
         else:
-          model.add(Dense(layer_width, input_shape=(len(layers[1][i-1][1]),)))
-          model.add(BatchNormalization())
+          model.add(Dense(layer_width, input_shape=(len(layers[1][i-1][1]),), name='layer_model_' + str(i)))
           model.add(Activation(layer_activation))
           model.add(Dropout(dropout))
       
       if not depth:
-        model.add(Dense(len(output_headers), input_shape=(input_size,)))
+        model.add(Dense(len(output_headers), input_shape=(input_size,), name='layer_model_0'))
       # No Activation in the end for now... Assuming regression always.
       model.compile(loss='mse',
             optimizer=optimizer,
             metrics=['accuracy'])
-      nb_epoch = 20
+      nb_epoch = 3
       if persist:
-        nb_epoch = 200
+        nb_epoch = 10
       
       model_name = str(hp).replace('{', '').replace('}', '')
       if persist:
@@ -213,26 +208,28 @@ class Model():
       X_train, Y_train = self.get_data_sets(sample=True)  # Only use a small sample.
 
       VAL_SPLIT = 0.1  # Split of data to use as validation.
-      history = model.fit(X_train, Y_train, 
-                          batch_size=batch_size, 
-                          nb_epoch=nb_epoch,
-                          shuffle=True,
-                          validation_split=VAL_SPLIT)
-      if persist:
-        # Save the model for inference purposes.
-        from db import persist_keras_model
-        persist_keras_model(self.get_handle(), model)
-      else:
-        # Save metrics of this run.
-        if model_name not in self.val_losses:
-          self.val_losses[model_name] = {}
-        for key, val in history.history.iteritems():
-          if key in self.val_losses[model_name]:
-            self.val_losses[model_name][key].extend(val)
-          else:
-            self.val_losses[model_name][key] = val
-        from db import save_model
-        save_model(self)
+      print 'Sizes: ' + str(len(X_train)) + ', ' + str(X_train[0].shape) + ' ' + str(len(Y_train))
+      with tf.Session() as sess:
+        history = model.fit(X_train, Y_train, 
+                            batch_size=batch_size, 
+                            nb_epoch=nb_epoch,
+                            shuffle=True,
+                            validation_split=VAL_SPLIT)
+        if persist:
+          # Save the model for inference purposes.
+          from db import persist_keras_model
+          persist_keras_model(self.get_handle(), model)
+        else:
+          # Save metrics of this run.
+          if model_name not in self.val_losses:
+            self.val_losses[model_name] = {}
+          for key, val in history.history.iteritems():
+            if key in self.val_losses[model_name]:
+              self.val_losses[model_name][key].extend(val)
+            else:
+              self.val_losses[model_name][key] = val
+          from db import save_model
+          save_model(self)
         
       total_dataset_loss = VAL_SPLIT * history.history['val_loss'][-1] 
       + (1 - VAL_SPLIT) * history.history['loss'][-1]
@@ -352,6 +349,7 @@ class Model():
         else:
           outputs['best'] = [self.normalize_float(value[0], output_headers[0], reverse=True)]
       print 'Outputs ' + str(outputs)
+      del model
       return outputs
 
   def from_json(self, json_str):

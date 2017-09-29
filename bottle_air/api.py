@@ -57,7 +57,9 @@ def infer(args, files):
   Args: Model handle, input values.
   Returns: A JSON containing all the model predictions.
   """
+  # clear_session()  # Clears TF graphs.
   clear_session()  # Clears TF graphs.
+  clear_thread_cache()  # We need to clear keras models since graph is deleted.
   try:
     model = get_model(args['handle'])
   except Exception as e:

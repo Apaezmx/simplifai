@@ -23,6 +23,8 @@ class DummyMc():
     return None
   def get(self, a):
     return None
+  def delete(self, a):
+    return None
 
 global config
 config = Config()  # Singleton class object to be used across the project.

@@ -22,7 +22,7 @@ def layer_choice(num):
     layer_neurons.append(hp.choice('num_layers ' + str(num) + ' layer ' + str(i), [('num_layers ' + str(num) + ' layer ' + str(i) + ' width ' + str(x), gen_layer(num, i, x)) for x in range(1,11)]))
   return layer_neurons
 
-def train(air_model, train_epochs=5):
+def train(air_model, train_epochs=20):
   """ Runs TPE black box optimization of the neural network to use.
   After evaluating all points, it saves the best model to disk and sets the status flag as TRAINED.
   """

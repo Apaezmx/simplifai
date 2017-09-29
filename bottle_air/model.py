@@ -198,9 +198,9 @@ class Model():
       model.compile(loss='mse',
             optimizer=optimizer,
             metrics=['accuracy'])
-      nb_epoch = 3
+      nb_epoch = 30
       if persist:
-        nb_epoch = 10
+        nb_epoch = 200
       
       model_name = str(hp).replace('{', '').replace('}', '')
       if persist:

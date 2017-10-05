@@ -96,6 +96,8 @@ def train_status(args, files):
     model = get_model(args['handle'])
   except:
     return json.dumps({'status': 'ERROR', 'why': 'Model probably not found'})
+  if not model:
+    return json.dumps({'status': 'ERROR', 'why': 'Concurrency error'})
   if model.status == ModelStatus.TRAINED:
     return json.dumps({'status': 'DONE'})
   losses = {}

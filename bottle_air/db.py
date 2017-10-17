@@ -1,5 +1,6 @@
 import bottle
 import bottle.ext.memcache
+import collections
 import csv
 import json
 import random
@@ -188,7 +189,7 @@ def load_csvs(file_list):
   """
   print 'File of csvs to load ' + unicode(file_list)
   data = {}
-  types = {}
+  types = collections.OrderedDict()
   for f in file_list:
     if os.path.isfile(f):
       with open(f, "r") as read_f:

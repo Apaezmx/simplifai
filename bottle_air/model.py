@@ -1,3 +1,4 @@
+import collections
 import json
 import numpy as np
 from config import config
@@ -36,7 +37,7 @@ class Model():
     self.status = ModelStatus.NULL
     
     # FeatureName keyed dict which contains strings with the types for each feature.
-    self.types = {}
+    self.types = collections.OrderedDict()
     
     # FeatureName keyed dict which contains lists with all features.
     self.data = {}
@@ -360,6 +361,10 @@ class Model():
     members = [a for a in dir(self) if not a.startswith('__') and not callable(getattr(self,a))]
     for member in members:
       setattr(self, member, json_obj[member])
+    
+    # For now do a one-off for types which should be loaded as an OrderedDict. This is inefficient.
+    json_obj = json.loads(json_str, object_pairs_hook=collections.OrderedDict)
+    self.types = json_obj["types"]
     
   def to_json(self):
     """ Converts the current instance to json by traversing all fields and putting them into a json map. """

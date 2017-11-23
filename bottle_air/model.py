@@ -121,10 +121,10 @@ class Model():
           word_list = [x.split() for x in self.data[header]]
           dict_, _ = self.process_text_feature(word_list)
           assert len(dict_) > 0, 'Dict is empty.'
-          self.embedding_dicts[header] = dict_
+          self.embedding_dicts[header] = dict_ #NEQP (Si haces un nuevo dict para cada columna de strings, no hay entonces idx que se repiten para diferentes palabras?)
           lengths = [len(words) for words in word_list]
           lengths.sort()
-          input_size = lengths[int(np.round((len(lengths)-1) * 0.95))]
+          input_size = lengths[int(np.round((len(lengths)-1) * 0.95))] #NEQP (Para que es este calculo?)
           if input_size == 0:
             print 'WARNING: input_size is 0 for ' + header
             input_size = 1
@@ -132,7 +132,7 @@ class Model():
             # Strings to integers. Pad sequences with zeros so that all of them have the same size.
             word_list[idx] = pad_sequences([[dict_[word] for word in words]], 
                                            maxlen=input_size, padding='post', 
-                                           truncating='post')[0].tolist()
+                                           truncating='post')[0].tolist() #NEQP (Y esto que pex?)
           self.string_features.append((header, word_list))
       
       # Build models.
@@ -150,7 +150,7 @@ class Model():
           model = Sequential(name='str_model_' + str(len(feature_models)))
           model.add(Embedding(len(self.embedding_dicts[header].keys()), embedding_size, input_length=sequence_length, name='embedding_model_' + str(len(feature_models))))
           model.add(Flatten(name='flatten_model_' + str(len(feature_models))))
-          total_input_size += embedding_size * len(word_list[0])
+          total_input_size += embedding_size * len(word_list[0]) #NEQP (Si hay un embedding por palabra: realmente los embeddings podran generar un vector de significado? Y, no se le da mucho peso a las strings por sobre los integers?)
           feature_models.append(model)
         
         numeric_inputs = len(self.data) - len(self.string_features) - len(output_headers)
@@ -161,7 +161,7 @@ class Model():
           feature_models.append(num_model)
         
         merged_model = Sequential()
-        if len(feature_models) < 0:
+        if len(feature_models) < 0: #NEQP (No seria < 1?)
           raise ValueError('No models built, no inputs?')
         elif len(feature_models) == 1:
           merged_model = feature_models[0]
@@ -172,7 +172,7 @@ class Model():
       # We will build in total DEEP_RANGE*WIDE_RANGE models.
       optimizer = hp['optimizer']
       layers = hp['layers']
-      dropout = 0.2  # hp['dropout']
+      dropout = 0.2  # hp['dropout'] #NEQP (No estaria bueno igual que hyperopt tambien optimizara estos hyperparamenters?)
       batch_size = 128  # hp['batch_size']
       
       model, input_size = init_model(self)
@@ -181,7 +181,7 @@ class Model():
       depth = len(layers[1])
       for i in range(depth):
         layer_activation = layers[1][i][1][1]
-        layer_width = layers[1][i][1][0]
+        layer_width = layers[1][i][1][0] #NEQP (Creo que es una buena practica variar el width de las layers. Normalmente se usan variaciones tipo 10-20-40-20-10)
         if i == 0 and depth != 1:
           model.add(Dense(layer_width, input_shape=(input_size,), name='layer_model_' + str(i)))
           model.add(Activation(layer_activation))
@@ -212,7 +212,7 @@ class Model():
       print 'Sizes: ' + str(len(X_train)) + ', ' + str(X_train[0].shape) + ' ' + str(len(Y_train))
       with tf.Session() as sess:
         history = model.fit(X_train, Y_train, 
-                            batch_size=batch_size, 
+                            batch_size=batch_size, #NEQP (Entonces X_train como esta organizado? Cual es su forma?)
                             nb_epoch=nb_epoch,
                             shuffle=True,
                             validation_split=VAL_SPLIT)
@@ -331,7 +331,7 @@ class Model():
     Returns: The predictions as a dictionary.
     """
     with tf.get_default_graph().as_default() as g:
-      output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')]
+      output_headers = [outputs for outputs in self.data.iterkeys() if outputs.startswith('output_')] #NEQP (Creo que esto se repite varias veces. No seria mas practico tener un self.output_headers?)
       
       self.normalize_values(values)
       string_data = self.intergerize_string(values)

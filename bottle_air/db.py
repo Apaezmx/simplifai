@@ -105,7 +105,7 @@ def parse_val(value):
     return value, None
   tests = [
       # (Type, Test)
-      ('int', int),
+      ('int', int), #NEQP (No podria tambien haber integers con el signo $?)
       ('float', lambda value: float(value.replace('$','').replace(',',''))),
       ('date', lambda value: datetime.strptime(value, "%Y/%m/%d")),
       ('time', lambda value: datetime.strptime(value, "%H:%M:%S"))
@@ -125,7 +125,7 @@ def parse_val(value):
     except ValueError:
       continue
   # No match
-  return value.decode('utf-8', 'ignore'), 'str'
+  return value.decode('utf-8', 'ignore'), 'str' #NEQP (Y que tal si hay espacio vacio alrededor de la palabra? No seria bueno meterle un strip()?)
  
 def persist_keras_model(handle, model):
   """ Persists a keras model to disk.
@@ -206,13 +206,13 @@ def load_csvs(file_list):
             if not output_headers:
               return 'No outputs defined in CSV. Please define columns as outputs by preppending \'output_\'.', ''
           else:  # If not first row, parse values assuming the headers dictionary has been already filled.
-            assert len(row) == len(headers), 'Uneven rows and headers at row ' + str(row) + ' with headers ' + str(headers)
+            assert len(row) == len(headers), 'Uneven rows and headers at row ' + str(row) + ' with headers ' + str(headers) #NEQP (Que hace si la row no tiene el mismo # de items que headers?)
             for idx, value in enumerate(row):
               val, typ = parse_val(value)
               data[headers[idx]].append(val)
               # If we find an entry which is string, then move all the column to be string.
               if not types[headers[idx]] or typ == 'str':
-                types[headers[idx]] = typ
+                types[headers[idx]] = typ #NEQP (No seria mejor idea hacer algun tipo de data analysis para saber que tanta relevancia tiene esa string? Que tal si son puros numeros, y de repente aparece un Undefined o algo asi)
     else:
       print 'WARN: CSV %s not found' % f
     
@@ -231,7 +231,7 @@ def load_csvs(file_list):
         floor = float(min(column))
         ceil = float(max(column))
         norms[header] = (floor, ceil)
-        data[header] = [(x-floor)/(ceil - floor) for x in column]
+        data[header] = [(x-floor)/(ceil - floor) for x in column] #NEQP (Si es buena idea normalizar SIEMPRE entre -1 y 1? Tambien he visto normalizaciones mas grandes o pequenias, creo, dependiendo de la naturaleza de los datos)
     
     # Run some last verifications so that all features have the same amount of rows.
     length = 0

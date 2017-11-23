@@ -253,10 +253,10 @@ $('#uploader').submit(function(e) {
     startUpload();
     e.preventDefault();
     var data = new FormData(this);
-    data.endpoint = 'upload_csv';
+    data.endpoint = 'upload-csv';
     $.ajax({
         type: 'POST',
-        url: '/api',
+        url: '/csv/upload',
         data: data,
         contentType: false,
         processData: false,
@@ -331,9 +331,8 @@ function startTraining() {
   if (model == "") {
     return;
   }
-  $.post('/api',
-        {'endpoint': 'train',
-         'handle': model},
+  $.post('/model/train',
+        {'handle': model},
         function(response) {
           response = JSON.parse(response);
           if (response['status'] != 'OK') {
@@ -345,9 +344,8 @@ function startTraining() {
 }
 /*Calls api.train_status while training the model to get val_losses data and call updateGraph() to create the graph. Calls function updateGraphs(), doPoll(), and sendData().*/
 function doPoll(handle){
-    $.post('/api',
-           {'endpoint': 'train_status',
-            'handle': handle},
+    $.post('/model/status',
+           {'handle': handle},
            function(data) {
             data = JSON.parse(data);
             if (data['status'] != 'DONE') {

@@ -169,11 +169,10 @@ function showRetrieve() {
     
 /*Creates the form where the user enters the data from which he/she wants to get a prediction.*/
 function infer_types() {
-  $.post('/api',
-        {'endpoint': 'infer_types',
-         'handle': $('#text_model').val()},
+  $.post('/types/infer',
+        {'handle': $('#text_model').val()},
         function(response) {
-          handle = $('#text_model').val();
+          model = $('#text_model').val();
           response = JSON.parse(response);
           if (response["status"] != "OK") {
             alert(JSON.stringify(response));
@@ -221,9 +220,8 @@ function infer() {
   $('#values #second_row').each(function(){
     values[this.children[0].innerHTML] = [this.children[1].children[0].value];
   });
-  $.post('/api',
-        {'endpoint': 'infer',
-         'handle': model,
+  $.post('/inference/make',
+        {'handle': model,
          'values': JSON.stringify(values)},
         function(response) {
           response = JSON.parse(response);

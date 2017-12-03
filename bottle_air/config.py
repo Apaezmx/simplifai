@@ -6,6 +6,7 @@ class Config():
   """ Static global class holding important parameters.
   """
   mc = {}  # Memchached object shared across threads.
+  DISTRIBUTED_HYPEROPT = False  # Needs a MongoDB instance URL to be set.
   ROOT_PATH = os.path.dirname(os.path.realpath(__file__)) 
 # Path to the project's directory.
   STATIC_PATH = os.path.dirname(os.path.realpath(__file__)) + '/static'  # Path to static resources.

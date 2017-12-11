@@ -1,0 +1,400 @@
+/*JSON Schema Draft-04*/
+
+/* db.createCollection("User")*/
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://simplifai.mx/schemas/user.json",
+    "$jsonschema": {
+        "title": "User",
+        "description": "Stores relevant information for user account creation and login",
+        "type": "object",
+        "required": ["email", "password", "isGoogleLogin", "created", "isEnabled", "name", "country", "phone"],
+        "properties": {
+            "email": { /*create Index for this property*/
+                "type": "string",
+                "pattern": "^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$"
+            },
+            "password": {
+                "type": "string",
+                "pattern": "^$", /*pattern undefined*/
+            },
+            "isGoogleLogin": {
+                "type": "boolean",
+                "description": "did the user signup with a Google account or not?"
+            },
+            "created": {
+                "type": "string",
+                "format" : "date-time" /*as specified by RFC 3339*/
+            },
+            "isEnabled": {
+                "type": "boolean",
+                "description": "is the account enabled or has it been blocked for some reason?"
+            },
+            "name": {
+                "type": "string"
+            },
+            "country": {
+                "type": "string"
+            },
+            "phone": {
+                "type": "integer" /*or is it better to have a string with a pattern?*/
+            }
+        },
+        "additionalProperties": false
+    }
+}
+
+/*db.createCollection("UserAccount")*/
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://simplifai.mx/schemas/user-account.json",,
+    "$jsonschema": {
+        "title": "UserAccount",
+        "description": "All information related to the user account",
+        "type": "object",
+        "required": ["userId", "workunits", "isAutopayEnabled", "userPayment"],
+        "properties": {
+            "userId": {
+              "type": "objectId", /*create Index on this property*/
+              "description": "reference to db.User"
+            },
+            "workunits": {
+                "type": "number",
+                "description": "how many work units does the user have left?"
+            },
+            "isAutopayEnabled": {
+                "type": "boolean",
+                "description": "did the user enable AutoPay?"
+            },
+            "autopayDate": {
+                "type": "string",
+                "format" : "date-time", /*as specified by RFC 3339*/
+                "description": "if Autopay is enabled, on which day will the transaction be done?"
+            },
+            "userPayment": { /*Possible embedded data. Or, should we put this in a different document?*/
+                "type": "object",
+                "required": ["amount", "currency", "lastEdited", "created"],
+                "properties": {
+                    "amount": {
+                        "type": "number",
+                    },
+                    "currency": {
+                        "type": "string"
+                    },
+                    "lastEdited": {
+                        "type": "string",
+                        "format" : "date-time" /*as specified by RFC 3339*/
+                    },
+                    "created": {
+                        "type": "string",
+                        "format" : "date-time"
+                    }
+                },
+                "additionalProperties" : false
+            }
+        },
+        "additionalProperties" : false,
+        "dependencies" : {
+            "isAutopayEnabled" : ["autopayDate"]
+        }
+    }
+}
+
+/*db.createCollection("Model")*/
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://simplifai.mx/schemas/model.json",
+    "$jsonschema": {
+        "title": "Model",
+        "description": "Collection that stores arrays with all the models' ObjectIds that belong to an individual UserId",
+        "type": "object",
+        "required": ["userId", "models"],
+        "properties": {
+            "userId": { /*create Index on this property*/
+                "type": "objectId",
+                "description": "reference to db.User"
+            },
+            "models": {
+                "type": "array",
+                "description": "array containing models' ObjectIds that are references to db.ModelVersion",
+                "uniqueItems": true,
+                "items": {
+                    "type": "objectId",
+                    "description": "ObjectIds that point to a model in db.ModelVersion"
+                }
+            }
+        },
+        "additionalProperties": false
+    }
+}
+   
+/*db.createCollection("ModelVersion")*/
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://simplifai.mx/schemas/model-version.json",
+    "$jsonschema": {
+        "title": "ModelVersion",
+        "description": "Collection storing all models and all their versions",
+        "type": "object",
+        "required": ["modelId", "name", "created", "lastTrained", "numberOfTrainings", "modelSize", "workUnitsSpent", "datasetVersionId", "version"],
+        "properties": {
+            "modelId": { /*create Index(modelId, created)*/
+                "type": "objectId",
+                "description": "reference in db.Model"
+            },
+            "name": { 
+                "type": "string",
+                "description": "general name of the model"
+            },
+            "created": { /*create Index(modelId, created)*/
+                "type": "string",
+                "format" : "date-time" /*as specified by RFC 3339*/
+            },
+            "lastTrained": {
+                "type": "string",
+                "format" : "date-time"
+            },
+            "lastRequest": {
+                "type": "string",
+                "format" : "date-time"
+            },
+            "numberOfTrainings": {
+                "type": "integer"
+            },
+            "numberOfRequests": {
+                "type": "integer"
+            },
+            "modelSize": {
+                "type": "string",
+                "enum" : ["S", "M", "L", "XL", "XXL"]
+            },
+            "workUnitsSpent": {
+                "type": "number"
+            },
+            "datasetVersionId": {
+                "type": "objectId",
+                "description": "reference to db.DatasetVersion"
+            },
+            "version": {
+                "type": "integer",
+            }
+        },
+        "additionalProperties": false,
+        "dependencies" : {
+            "lastRequest" : ["numberOfRequests"]
+        }
+    }
+}
+
+/*db.createCollection("Training")*/
+/*db.Training.createIndex( {"createdAt": 1}, { expireAfterSeconds: int } )*/
+/*This documents have TTL (Time to Live), so they expire after a certain amount of time*/
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://simplifai.mx/schemas/training.json",
+    "$jsonschema": {
+        "title": "Training",
+        "description": "Temporal data related to training a model",
+        "type": "object",
+        "required": ["modelVersionId", "createdAt", "finished", "status"],
+        "properties": {
+            "modelVersionId": {
+                "type": "objectId",
+                "description": "reference to db.ModelVersion"
+            },
+            "createdAt": {
+                "type": "string",
+                "format" : "date-time" /*as specified by RFC 3339*/
+            },
+            "finished": {
+                "type": "string",
+                "format" : "date-time"
+            },
+            "status": {
+                "type": "string",
+                "enum": ["Training", "Trained"]
+            }
+        },
+        "additionalProperties": false
+    }
+}
+
+/*dbo.createCollection("Request")*/
+/*db.Request.createIndex( {"createdAt": 1}, { expireAfterSeconds: int } )*/
+/*This documents have TTL (Time to Live), so they expire after a certain amount of time*/
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://simplifai.mx/schemas/request.json",
+    "$jsonschema": {
+        "title": "Request",
+        "description": "Temporal data related to users' inferences",
+        "bsonType": "object",
+        "required": ["modelVersionId", "numberOfRows", "latencyUsec", "createdAt", "status"],
+        "properties": {
+            "modelVersionId": { /*reference to db.ModelVersion*/
+                "type": "objectId"
+            },
+            "numberOfRows": {
+                "type": "integer"
+            },
+            "latencyUsec": {
+                "type": "number"
+            },
+            "createdAt": { /*"issued" in original UML*/
+                "type": "string",
+                "format" : "date-time" /*as specified by RFC 3339*/
+            },
+            "status": {
+                "type": "string",
+                "enum" : ["Requesting", "Done"]
+            }
+        },
+        "additionalProperties": false
+    }
+}
+
+/*db.createCollection("Dataset")*/
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://simplifai.mx/schemas/dataset.json",
+    "$jsonschema": {
+        "title": "Dataset",
+        "description": "Collection that stores arrays with all the datasets' ObjectIds that belong to an individual UserId",
+        "type": "object",
+        "required": ["userId", "datasets"],
+        "properties": {
+            "userId": { /*reference to db.User / createIndex*/
+                "type": "objectId"
+            },
+            "datasets": {
+                "type": "array",
+                "description": "array containing datasets' ObjectIds that are references to db.DatasetVersion",
+                "uniqueItems": true,
+                "items": {
+                    "type": "objectId",
+                    description: "references to db.DatasetVersion"
+                }
+            }
+        },
+        "additionalProperties": false
+    }
+}
+
+/*db.createCollection("DatasetVersion")*/
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://simplifai.mx/schemas/dataset-version.json",
+    "$jsonschema": {
+        "title": "DatasetVersion",
+        "description": "Collection storing all datasets and all their versions",
+        "type": "object",
+        "required": ["datasetId", "name", "userId", "created", "lastEdited", "numberOfRows", "numberOfFiles", "numberOfFeatures", "featuresNames", "version", "path"],
+        "properties": {
+            "datasetId": { /*create Index(datasetId, created)*/
+                "type": "objectId",
+                "description" : "references to db.Dataset"
+            },
+            "name": {
+                "type": "string",
+                "description" : "name of the general dataset"
+            },
+            "userId": {
+                "type": "objectId",
+                "description" : "References to db.User"
+            },
+            "created": { /*create Index(datasetId, created)*/
+                "type": "string",
+                "format" : "date-time" /*as specified by RFC 3339*/
+            },
+            "lastEdited": {
+                "type": "string",
+                "format" : "date-time" /*as specified by RFC 3339*/
+            },
+            "numberOfRows": {
+                "type": "integer"
+            },
+            "numberOfFiles": {
+                "type": "integer"
+            },
+            "numberOfFeatures": {
+                "type": "integer"
+            },
+            "featuresNames": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                    "type": "string"
+                }
+            },
+            "version": {
+                "type": "integer"
+            },
+            "path": {
+                "type": "string"
+            }
+        },
+        "additionalProperties": false
+    }
+}
+
+/*db.createCollection("ModelInputs")*/
+/*db.ModelInputs.createIndex( {"createdAt": 1}, { expireAfterSeconds: int } )*/
+/*This documents have TTL (Time to Live), so they expire after a certain amount of time*/
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://simplifai.mx/schemas/model-inputs.json",
+    "$jsonschema": {
+        "title": "ModelInputs",
+        "description": "Types of a model's features, found after processing the dataset for training",
+        "type": "object",
+        "required": ["features"],
+        "properties": {
+            "features" : {
+                "type" : "array",
+                "uniqueItems": false,
+                "items" : {
+                    "type" : "string"
+                }
+            }
+        },
+        "additionalProperties": false
+    }
+}
+
+/*db.createCollection("ModelInputsMetadata")*/
+/*db.ModelInputsMetadata.createIndex( {"createdAt": 1}, { expireAfterSeconds: int } )*/
+/*This documents have TTL (Time to Live), so they expire after a certain amount of time*/
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "id": "http://simplifai.mx/schemas/model-inputs-metadata.json",
+    "$jsonschema": {
+        "title": "ModelInputsMetadata",
+        "description": "Metadata extracted from a dataset after being processed. This data is used for model training",
+        "type": "object",
+        "required": ["inputs"],
+        "properties": {
+            "inputs" : {
+                "type" : "array",
+                "uniqueItems": "false",
+                "items" : {
+                    "anyOf" : [
+                        {"type" : "string"},
+                        {"type" : "integer"},
+                        {"type" : "number"},
+                        {"type" : "string", "format" : "date-time"}
+                    ]
+                }
+            }
+        },
+        "additionalProperties": false
+    }
+}
+
+
+
+
+
+
+
+
+

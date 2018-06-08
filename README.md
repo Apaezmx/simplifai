@@ -1,4 +1,6 @@
 # README #
+## Demo ##
+http://www.simplifai.mx:8012/
 ## Overview ##
 
 Bottle_air is a server which takes in a feature file (only CSVs are supported for now) and runs a hyperparameter optimization algorithm over deep network architectures to find the optimal candidate. Once the appropriate candidate is found, it is extensively trained, and saved for inference.

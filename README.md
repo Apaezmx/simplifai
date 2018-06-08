@@ -28,7 +28,9 @@ Bottle_air runs on python 2.7. It uses the Bottle framework and the CherryPy ser
 * If using tensorflow with GPU then pip uninstall tensoflow followed by pip install tensorflow-gpu (needs Cuda and cuDNN).
 * python bottle_air/server.py
 
-Once the server is running it should be available at http://localhost:8080/. If you need to change the server's port, just change it at the end of server.py. There are test CSVs to try under pusher/air/test_files
+You can also just run the start.sh file.
+
+Once the server is running it should be available at http://localhost:8080/. If you need to change the server's port, just change it at the end of server.py. There are test CSVs to try under simplifai/bottle_air/test_files
 
 ## Code guidelines ##
 

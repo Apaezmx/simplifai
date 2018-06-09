@@ -1,6 +1,15 @@
 # README #
+<img src="http://www.simplifai.mx/wp-content/uploads/2017/05/SimplifAiLogo_1.png" alt="SimpifAi-Simplifying Technology"/>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/o0ix881crP8" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
 ## Demo ##
 http://www.simplifai.mx:8012/
+### How to Use ###
+Open the demo link and click on the start button. 
+Download the human resources example CSV and take a look at it. You should see the format which consists of the first row being the headers (name of the columns) and the rest of the rows are just the data. One final detail to notice is that the column we want the model to predict is prefixed by "output_" (TODO add a more friendly way of doing this).
+So going back to the browser, upload the HR file and click continue. You'll see all the columns parsed and ready to be trained on.
+Click on continue and the training will start. After a few minutes training will be done and you'll be redirected to the infer site (Enable pop-ups on your browser). There you can now use the trained model.
+
+
 ## Overview ##
 
 Bottle_air is a server which takes in a feature file (only CSVs are supported for now) and runs a hyperparameter optimization algorithm over deep network architectures to find the optimal candidate. Once the appropriate candidate is found, it is extensively trained, and saved for inference.

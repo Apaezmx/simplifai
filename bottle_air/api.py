@@ -131,6 +131,9 @@ def upload_csv(args, files):
   save_path = "/tmp/{name}".format(name=upload.filename)
   if not os.path.isfile(save_path):
     upload.save(save_path)
+  
+  if os.stat(save_path).st_size > 100000:
+    return 'File too big'
 
   model = new_model()
   res = model.add_train_file(save_path)

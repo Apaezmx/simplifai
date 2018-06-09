@@ -1,6 +1,7 @@
 # README #
 <img src="http://www.simplifai.mx/wp-content/uploads/2017/05/SimplifAiLogo_1.png" alt="SimpifAi-Simplifying Technology"/>
-<iframe width="560" height="315" src="https://www.youtube.com/embed/o0ix881crP8" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
+https://www.youtube.com/embed/o0ix881crP8
 ## Demo ##
 http://www.simplifai.mx:8012/
 ### How to Use ###

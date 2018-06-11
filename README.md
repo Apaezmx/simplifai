@@ -5,10 +5,11 @@ https://www.youtube.com/embed/o0ix881crP8
 ## Demo ##
 http://www.simplifai.mx:8012/
 ### How to Use ###
-Open the demo link and click on the start button. 
-Download the human resources example CSV and take a look at it. You should see the format which consists of the first row being the headers (name of the columns) and the rest of the rows are just the data. One final detail to notice is that the column we want the model to predict is prefixed by "output_" (TODO add a more friendly way of doing this).
-So going back to the browser, upload the HR file and click continue. You'll see all the columns parsed and ready to be trained on.
-Click on continue and the training will start. After a few minutes training will be done and you'll be redirected to the infer site (Enable pop-ups on your browser). There you can now use the trained model.
+* Open the demo link and click on the start button. 
+* Download the human resources example CSV and take a look at it. You should see the format which consists of the first row being the headers (name of the columns) and the rest of the rows are just the data. One final detail to notice is that the column we want the model to predict is prefixed by "output_" (TODO add a more friendly way of doing this).
+* Back on the browser, upload the HR file and click continue. You'll see all the columns parsed and ready to be trained on.
+* Click on continue and the training will start. After a few minutes training will be done and you'll be redirected to the infer site (Enable pop-ups on your browser). 
+* Once the model is trained, you can use it on the site for individual examples, or on Google Spreadsheets.
 
 
 ## Overview ##

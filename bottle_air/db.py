@@ -231,7 +231,10 @@ def load_csvs(file_list):
         floor = float(min(column))
         ceil = float(max(column))
         norms[header] = (floor, ceil)
-        data[header] = [(x-floor)/(ceil - floor) for x in column] #NEQP (Si es buena idea normalizar SIEMPRE entre -1 y 1? Tambien he visto normalizaciones mas grandes o pequenias, creo, dependiendo de la naturaleza de los datos)
+        if ceil == floor:
+	  data[header] = 0
+        else:
+          data[header] = [(x-floor)/(ceil - floor) for x in column] #NEQP (Si es buena idea normalizar SIEMPRE entre -1 y 1? Tambien he visto normalizaciones mas grandes o pequenias, creo, dependiendo de la naturaleza de los datos)
     
     # Run some last verifications so that all features have the same amount of rows.
     length = 0

@@ -2,11 +2,13 @@ sudo apt-get --assume-yes install python-pip python-dev build-essential git libe
 
 sudo pip install virtualenv virtualenvwrapper
 
-git clone https://Apaezmx@bitbucket.org/Apaezmx/pusher.git
+cd ~
 
-cd pusher
+git clone https://github.com/Apaezmx/simplifai.git
 
-mkdir air/models
+cd simplifai
+
+mkdir bottle_air/models
 
 virtualenv --distribute .
 

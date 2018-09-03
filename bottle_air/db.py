@@ -232,7 +232,7 @@ def load_csvs(file_list):
         ceil = float(max(column))
         norms[header] = (floor, ceil)
         if ceil == floor:
-	  data[header] = 0
+	  data[header] = [0] * len(column)
         else:
           data[header] = [(x-floor)/(ceil - floor) for x in column] #NEQP (Si es buena idea normalizar SIEMPRE entre -1 y 1? Tambien he visto normalizaciones mas grandes o pequenias, creo, dependiendo de la naturaleza de los datos)
     

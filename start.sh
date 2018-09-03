@@ -14,6 +14,8 @@ virtualenv --distribute .
 
 source bin/activate
 
+easy_install distribute
+
 pip install --upgrade pip
 
 pip install -r reqs.txt

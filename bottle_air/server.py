@@ -162,8 +162,8 @@ def infer():
     
   if 'values' not in args:
     return json.dumps({'status': 'ERROR', 'why': 'No values specified'})
-  print(args['handle'])
-  print(args['values'])
+  print args['handle']
+  print args['values']
   outputs = model.infer(json.loads(args['values']))
   return json.dumps({'status': 'OK', 'result': outputs})
 
@@ -176,4 +176,4 @@ parser.add_argument('--root_path', type=str, help='filepath to server root')
 args = parser.parse_args()
 
 config.tf_server = tf.train.Server.create_local_server()
-run(app, reloader=True, host='localhost', port=8012, server='cherrypy')
+run(app, reloader=True, host='0.0.0.0', port=8012, server='cherrypy')

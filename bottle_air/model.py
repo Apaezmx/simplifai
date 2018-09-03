@@ -199,9 +199,9 @@ class Model():
       model.compile(loss='mse',
             optimizer=optimizer,
             metrics=['accuracy'])
-      nb_epoch = 30
+      nb_epoch = 100
       if persist:
-        nb_epoch = 200
+        nb_epoch = 300
       
       model_name = str(hp).replace('{', '').replace('}', '')
       if persist:
@@ -289,13 +289,17 @@ class Model():
     """
     if reverse:
       return val * (self.norms[header][1] - self.norms[header][0]) + self.norms[header][0]
+    
+    # Avoid division by zero for zeroed out columns.
+    if self.norms[header][1] == self.norms[header][0]:
+      return val
     return (val-self.norms[header][0])/(self.norms[header][1] - self.norms[header][0])
 
   def normalize_values(self, values):
     """ Normalizes all non-string features in 'values'. """
     for header, column in values.iteritems():
       if self.types[header] != 'str':
-        values[header] = [self.normalize_float(float(x), header) for x in column]
+	values[header] = [self.normalize_float(float(x) if x else 0.0, header) for x in column]
   
   def intergerize_string(self, data):
     """ Transforms all string features into integer arrays. """
